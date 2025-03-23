@@ -84,10 +84,16 @@ class LinearRegression:
     def train_gradient_descent(self, lr=0.01, epochs=1000, clip_value=1e-2):
         m, n = self.X.shape
         self.coef = np.zeros((n, 1))
+        
         for _ in range(epochs):
-            gradients = ((2/m) * self.X.T @ (self.X @ self.coef - self.y)).reshape(-1, 1)
+            gradients = (2/m) * self.X.T @ (self.X @ self.coef - self.y.reshape(-1, 1))
             gradients = np.clip(gradients, -clip_value, clip_value)
+
+            if gradients.shape != self.coef.shape:
+                gradients = gradients[:self.coef.shape[0], :]  # Ajustar el tamaño
+
             self.coef -= lr * gradients
+
     
     def predict(self, X_new):
         X_new = np.c_[np.ones((X_new.shape[0], 1)), X_new]
