@@ -1,7 +1,7 @@
 # Fdb version 3
-["pdflatex"] 1743437988 "/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/template_informe.tex" "template_informe.pdf" "template_informe" 1743437988
+["pdflatex"] 1743627067 "/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/template_informe.tex" "template_informe.pdf" "template_informe" 1743627067
   "/etc/texmf/web2c/texmf.cnf" 1716483461 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/template_informe.tex" 1743437987 4904 df158f12e81429f0319ae8b17e1abe08 ""
+  "/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/template_informe.tex" 1743437987 4904 df158f12e81429f0319ae8b17e1abe08 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -86,8 +86,8 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1716483465 128028 f533b797fba58d231669ea19e894e23e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1716483989 1427367 d1e13261a4a98e6d2bc2ff852a46fd89 ""
-  "template_informe.aux" 1743437988 1830 39d9d801b3e49ff3757f41ce79da18f3 "pdflatex"
-  "template_informe.out" 1743437988 1174 904b0138d586329d69e269870f91a6f5 "pdflatex"
+  "template_informe.aux" 1743627067 1830 39d9d801b3e49ff3757f41ce79da18f3 "pdflatex"
+  "template_informe.out" 1743627067 1174 904b0138d586329d69e269870f91a6f5 "pdflatex"
   "template_informe.tex" 1743437987 4904 df158f12e81429f0319ae8b17e1abe08 ""
   (generated)
   "template_informe.aux"

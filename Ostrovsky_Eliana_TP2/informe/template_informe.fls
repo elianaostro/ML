@@ -1,9 +1,9 @@
-PWD /home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2
+PWD /home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe
 INPUT /etc/texmf/web2c/texmf.cnf
 INPUT /usr/share/texmf/web2c/texmf.cnf
 INPUT /usr/share/texlive/texmf-dist/web2c/texmf.cnf
 INPUT /var/lib/texmf/web2c/pdftex/pdflatex.fmt
-INPUT /home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/template_informe.tex
+INPUT /home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/template_informe.tex
 OUTPUT template_informe.log
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/article.cls
 INPUT /usr/share/texlive/texmf-dist/tex/latex/base/article.cls
