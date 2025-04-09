@@ -13,28 +13,27 @@ np.random.seed(42)
 
 # 1. Carga y exploración inicial de datos
 def load_and_explore_data():
-    # Cargar datos (asumiendo que están en la carpeta data/)
-    dev_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_test_imbalanced.csv')
-    test_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_balanced_test.csv')
-    imbalanced_dev_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_imbalanced_dev.csv')
-    imbalanced_test_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_imbalanced_test.csv')
+    dev_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_dev.csv')
+    test_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_test.csv')
+    imbalanced_dev_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_dev_imbalanced.csv')
+    imbalanced_test_data = pd.read_csv('Ostrovsky_Eliana_TP2/src/data/cell_diagnosis_test_imbalanced.csv')
     
     # Mostrar información básica
     print("=== Datos Balanceados (Desarrollo) ===")
-    print(dev_data.info())
+    dev_data.info()
     print("\n=== Datos Balanceados (Test) ===")
-    print(test_data.info())
+    test_data.info()
     print("\n=== Datos Desbalanceados (Desarrollo) ===")
-    print(imbalanced_dev_data.info())
+    imbalanced_dev_data.info()
     
     # Separar características y target
-    X_dev = dev_data.drop('diagnosis', axis=1).values
-    y_dev = dev_data['diagnosis'].values
-    X_test = test_data.drop('diagnosis', axis=1).values
-    y_test = test_data['diagnosis'].values
+    X_dev = dev_data.drop('Diagnosis', axis=1).values
+    y_dev = dev_data['Diagnosis'].values
+    X_test = test_data.drop('Diagnosis', axis=1).values
+    y_test = test_data['Diagnosis'].values
     
     # Nombres de características para visualización
-    feature_names = dev_data.drop('diagnosis', axis=1).columns.tolist()
+    feature_names = dev_data.drop('Diagnosis', axis=1).columns.tolist()
     
     return X_dev, y_dev, X_test, y_test, feature_names, imbalanced_dev_data, imbalanced_test_data
 
@@ -186,10 +185,10 @@ def handle_imbalanced_data(imbalanced_dev_data, imbalanced_test_data, best_lambd
     print("\n=== Manejo de Datos Desbalanceados ===")
     
     # Separar características y target
-    X_imb_dev = imbalanced_dev_data.drop('diagnosis', axis=1).values
-    y_imb_dev = imbalanced_dev_data['diagnosis'].values
-    X_imb_test = imbalanced_test_data.drop('diagnosis', axis=1).values
-    y_imb_test = imbalanced_test_data['diagnosis'].values
+    X_imb_dev = imbalanced_dev_data.drop('Diagnosis', axis=1).values
+    y_imb_dev = imbalanced_dev_data['Diagnosis'].values
+    X_imb_test = imbalanced_test_data.drop('Diagnosis', axis=1).values
+    y_imb_test = imbalanced_test_data['Diagnosis'].values
     
     # Reporte de balance original
     print("\nDistribución original:")

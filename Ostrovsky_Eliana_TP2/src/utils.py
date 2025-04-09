@@ -126,29 +126,43 @@ def class_balance_report(y, class_names=None):
     Genera un reporte del balance de clases.
     
     Parámetros:
-    - y: Etiquetas de clase
-    - class_names: Lista de nombres de clases
+    - y: Etiquetas de clase (array-like)
+    - class_names: Lista de nombres de clases o diccionario de mapeo
     
     Retorna:
     - Diccionario con conteos y proporciones por clase
     """
-    if class_names is None:
-        class_names = np.unique(y)
-    
-    counts = Counter(y)
+    # Convertir y a numpy array para asegurar consistencia
+    y = np.asarray(y)
+    classes, counts = np.unique(y, return_counts=True)
     total = len(y)
     
+    # Crear mapeo de clases a nombres
+    if class_names is None:
+        class_map = {cls: str(cls) for cls in classes}
+    elif isinstance(class_names, (list, tuple, np.ndarray)):
+        if len(class_names) != len(classes):
+            raise ValueError("La longitud de class_names no coincide con el número de clases únicas")
+        class_map = {cls: name for cls, name in zip(classes, class_names)}
+    elif isinstance(class_names, dict):
+        class_map = class_names
+    else:
+        raise TypeError("class_names debe ser lista, tupla, array o diccionario")
+    
+    # Generar reporte
     report = {
-        'counts': {class_names[cls]: count for cls, count in counts.items()},
-        'proportions': {class_names[cls]: count/total for cls, count in counts.items()},
-        'total_samples': total
+        'counts': {class_map[cls]: count for cls, count in zip(classes, counts)},
+        'proportions': {class_map[cls]: count/total for cls, count in zip(classes, counts)},
+        'total_samples': total,
+        'class_mapping': class_map
     }
     
+    # Imprimir reporte
     print("Reporte de Balance de Clases:")
     print(f"Total de muestras: {total}")
     print("\nConteo por clase:")
-    for cls, count in report['counts'].items():
-        print(f"- {cls}: {count} muestras ({report['proportions'][cls]:.2%})")
+    for cls_name, count in report['counts'].items():
+        print(f"- {cls_name}: {count} muestras ({report['proportions'][cls_name]:.2%})")
     
     return report
 

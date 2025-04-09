@@ -107,9 +107,18 @@ def pr_curve(y_true, y_scores):
     return np.array(precision), np.array(recall), thresholds
 
 def auc(x, y):
-    """Calcula el área bajo la curva usando la regla del trapecio"""
+    """
+    Calcula el área bajo la curva usando la regla del trapecio
+    
+    Args:
+        x: Valores en el eje x (array-like)
+        y: Valores en el eje y (array-like)
+        
+    Returns:
+        Área bajo la curva (float)
+    """
     direction = 1 if x[-1] > x[0] else -1
-    area = np.trapz(y, x) * direction
+    area = np.trapezoid(y, x) * direction
     return area
 
 def plot_confusion_matrix(y_true, y_pred, classes, title='Confusion matrix'):
