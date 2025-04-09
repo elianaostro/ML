@@ -1,8 +1,98 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from collections import Counter
-
 from metrics import accuracy_score
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def PCA(X, n_components=2):
+    """
+    PCA simple sin sklearn
+    
+    Args:
+        X: Datos de entrada (n_samples, n_features)
+        n_components: Número de componentes a retener
+        
+    Returns:
+        X_reduced: Datos proyectados (n_samples, n_components)
+        components: Componentes principales (n_features, n_components)
+    """
+    # 1. Centrar los datos
+    mean = np.mean(X, axis=0)
+    X_centered = X - mean
+    
+    # 2. Calcular matriz de covarianza
+    cov = np.cov(X_centered.T)  # Transponer para que features sean filas
+    
+    # 3. Descomposición en valores propios
+    eigenvalues, eigenvectors = np.linalg.eig(cov)
+    
+    # 4. Ordenar componentes por varianza explicada
+    sorted_indices = np.argsort(eigenvalues)[::-1]
+    eigenvectors = eigenvectors[:, sorted_indices]
+    
+    # 5. Seleccionar componentes principales
+    components = eigenvectors[:, :n_components]
+    
+    # 6. Proyectar los datos
+    X_reduced = np.dot(X_centered, components)
+    
+    return X_reduced, components
+
+## Implementación simple de K-Means
+def KMeans(X, n_clusters=3, max_iter=100, random_state=None):
+    """
+    K-Means simple sin sklearn
+    
+    Args:
+        X: Datos de entrada (n_samples, n_features)
+        n_clusters: Número de clusters
+        max_iter: Máximo número de iteraciones
+        random_state: Semilla aleatoria
+        
+    Returns:
+        labels: Etiquetas de cluster para cada punto
+        centroids: Posición de los centroides finales
+    """
+    if random_state is not None:
+        np.random.seed(random_state)
+    
+    n_samples = X.shape[0]
+    
+    # 1. Inicializar centroides aleatoriamente
+    random_indices = np.random.choice(n_samples, n_clusters, replace=False)
+    centroids = X[random_indices]
+    
+    for _ in range(max_iter):
+        # 2. Calcular distancias a cada centroide
+        distances = np.sqrt(((X - centroids[:, np.newaxis])**2).sum(axis=2))
+        
+        # 3. Asignar cada punto al cluster más cercano
+        labels = np.argmin(distances, axis=0)
+        
+        # 4. Calcular nuevos centroides
+        new_centroids = np.array([X[labels == k].mean(axis=0) for k in range(n_clusters)])
+        
+        # 5. Verificar convergencia
+        if np.allclose(centroids, new_centroids):
+            break
+            
+        centroids = new_centroids
+    
+    return labels, centroids
+
+## Función para visualizar resultados
+def plot_clusters(X_2d, labels, centroids, title="Resultados de Clustering"):
+    plt.figure(figsize=(10, 6))
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=labels, cmap='viridis', s=50, alpha=0.6)
+    plt.scatter(centroids[:, 0], centroids[:, 1], c='red', marker='X', s=200, label='Centroides')
+    plt.title(title, pad=20)
+    plt.xlabel('Componente Principal 1')
+    plt.ylabel('Componente Principal 2')
+    plt.legend()
+    plt.grid(True)
+    plt.colorbar(label='Cluster')
+    plt.show()
 
 def stratified_train_test_split(X, y, test_size=0.2, random_state=None):
     """
@@ -122,47 +212,29 @@ def detect_outliers_iqr(X, factor=1.5):
     return (X < lower_bound) | (X > upper_bound)
 
 def class_balance_report(y, class_names=None):
-    """
-    Genera un reporte del balance de clases.
-    
-    Parámetros:
-    - y: Etiquetas de clase (array-like)
-    - class_names: Lista de nombres de clases o diccionario de mapeo
-    
-    Retorna:
-    - Diccionario con conteos y proporciones por clase
-    """
-    # Convertir y a numpy array para asegurar consistencia
-    y = np.asarray(y)
+    """Genera un reporte del balance de clases."""
     classes, counts = np.unique(y, return_counts=True)
     total = len(y)
     
-    # Crear mapeo de clases a nombres
     if class_names is None:
-        class_map = {cls: str(cls) for cls in classes}
-    elif isinstance(class_names, (list, tuple, np.ndarray)):
-        if len(class_names) != len(classes):
-            raise ValueError("La longitud de class_names no coincide con el número de clases únicas")
-        class_map = {cls: name for cls, name in zip(classes, class_names)}
-    elif isinstance(class_names, dict):
-        class_map = class_names
-    else:
-        raise TypeError("class_names debe ser lista, tupla, array o diccionario")
+        class_names = [str(cls) for cls in classes]
+    elif len(class_names) != len(classes):
+        raise ValueError("La longitud de class_names no coincide con el número de clases únicas")
     
-    # Generar reporte
+    # Crear mapeo de clase a nombre
+    class_map = {cls: name for cls, name in zip(classes, class_names)}
+    
     report = {
         'counts': {class_map[cls]: count for cls, count in zip(classes, counts)},
         'proportions': {class_map[cls]: count/total for cls, count in zip(classes, counts)},
-        'total_samples': total,
-        'class_mapping': class_map
+        'total_samples': total
     }
     
-    # Imprimir reporte
     print("Reporte de Balance de Clases:")
     print(f"Total de muestras: {total}")
     print("\nConteo por clase:")
-    for cls_name, count in report['counts'].items():
-        print(f"- {cls_name}: {count} muestras ({report['proportions'][cls_name]:.2%})")
+    for cls, count in report['counts'].items():
+        print(f"- {cls}: {count} muestras ({report['proportions'][cls]:.2%})")
     
     return report
 

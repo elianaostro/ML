@@ -29,18 +29,139 @@ def minmax_scaler(X):
     range_vals[range_vals == 0] = 1.0  # Evitar división por cero
     return (X - min_vals) / range_vals, min_vals, max_vals
 
-def handle_missing_values(X, strategy='mean'):
-    """Manejo de valores faltantes"""
+def knn_impute(X, k=5, metric='euclidean'):
+    """
+    Implementación básica de KNN Imputer
+    
+    Args:
+        X: Matriz de datos con NaN (n_samples, n_features)
+        k: Número de vecinos a considerar
+        metric: Métrica de distancia ('euclidean' o 'manhattan')
+        
+    Returns:
+        Matriz con valores imputados
+    """
+    X_imputed = X.copy()
+    _, n_features = X.shape
+    
+    # Para cada feature con NaN
+    for col in range(n_features):
+        nan_mask = np.isnan(X[:, col])
+        
+        if not np.any(nan_mask):
+            continue  # No hay NaN en esta columna
+            
+        # Indices de muestras con valores conocidos
+        known_idx = np.where(~nan_mask)[0]
+        unknown_idx = np.where(nan_mask)[0]
+        
+        # Para cada muestra con NaN
+        for idx in unknown_idx:
+            # Calcular distancias
+            if metric == 'euclidean':
+                distances = np.sqrt(np.sum((X[known_idx] - X[idx])**2, axis=1))
+            elif metric == 'manhattan':
+                distances = np.sum(np.abs(X[known_idx] - X[idx]), axis=1)
+            else:
+                raise ValueError("Métrica no soportada")
+            
+            # Encontrar k vecinos más cercanos
+            nearest_indices = known_idx[np.argsort(distances)[:k]]
+            
+            # Imputar con la media de los vecinos (ignorando NaN en vecinos)
+            valid_values = X[nearest_indices, col]
+            valid_values = valid_values[~np.isnan(valid_values)]
+            
+            if len(valid_values) > 0:
+                X_imputed[idx, col] = np.mean(valid_values)
+            else:
+                # Si todos los vecinos tienen NaN, usar la media global
+                X_imputed[idx, col] = np.nanmean(X[:, col])
+    
+    return X_imputed
+
+def knn_impute_fast(X, k=5):
+    """Versión optimizada de KNN Imputer usando operaciones vectorizadas"""
+    X_imputed = X.copy()
+    _, n_features = X.shape
+    
+    for col in range(n_features):
+        nan_mask = np.isnan(X[:, col])
+        if not nan_mask.any():
+            continue
+            
+        # Calcular distancias entre muestras con NaN y sin NaN
+        known_samples = X[~nan_mask]
+        unknown_samples = X[nan_mask]
+        
+        # Distancia euclidiana vectorizada
+        distances = np.sqrt(((known_samples[:, np.newaxis] - unknown_samples)**2).sum(axis=2))
+        
+        # Para cada muestra con NaN, encontrar k vecinos más cercanos
+        for i, sample_idx in enumerate(np.where(nan_mask)[0]):
+            nearest_indices = np.argsort(distances[:, i])[:k]
+            valid_values = known_samples[nearest_indices, col]
+            valid_values = valid_values[~np.isnan(valid_values)]
+            
+            X_imputed[sample_idx, col] = np.mean(valid_values) if len(valid_values) > 0 else np.nanmean(X[:, col])
+    
+    return X_imputed
+
+def handle_missing_values(X, strategy='mean', k=5, metric='euclidean'):
+    """
+    Manejo de valores faltantes con múltiples estrategias
+    
+    Args:
+        X: Matriz de datos (n_samples, n_features)
+        strategy: 'mean', 'median', 'zero', 'knn'
+        k: Número de vecinos para KNN (solo si strategy='knn')
+        metric: 'euclidean' o 'manhattan' (solo si strategy='knn')
+        
+    Returns:
+        Matriz sin valores faltantes
+    """
+    if not isinstance(X, np.ndarray):
+        X = np.array(X)
+    
+    if not np.isnan(X).any():
+        return X  # No hay valores faltantes
+    
     if strategy == 'mean':
         fill_value = np.nanmean(X, axis=0)
+        return np.where(np.isnan(X), fill_value, X)
     elif strategy == 'median':
         fill_value = np.nanmedian(X, axis=0)
+        return np.where(np.isnan(X), fill_value, X)
     elif strategy == 'zero':
-        fill_value = 0
+        return np.where(np.isnan(X), 0, X)
+    elif strategy == 'knn':
+        return knn_impute(X, k=k, metric=metric)
+    elif strategy == 'knn_fast':
+        return knn_impute_fast(X, k=k)
     else:
-        raise ValueError("Estrategia no válida")
+        raise ValueError(f"Estrategia no válida: {strategy}. Use 'mean', 'median', 'zero' o 'knn'")
+
+
+def detect_outliers_iqr(X, factor=1.5):
+    """
+    Detecta outliers usando el método del rango intercuartílico (IQR).
     
-    return np.where(np.isnan(X), fill_value, X)
+    Parámetros:
+    - X: Datos de características (numpy array)
+    - factor: Factor multiplicador del IQR (típicamente 1.5)
+    
+    Retorna:
+    - Máscara booleana de outliers (True = outlier)
+    """
+    q1 = np.percentile(X, 25, axis=0)
+    q3 = np.percentile(X, 75, axis=0)
+    iqr = q3 - q1
+    
+    lower_bound = q1 - factor * iqr
+    upper_bound = q3 + factor * iqr
+    
+    return (X < lower_bound) | (X > upper_bound)
+
 
 def oversample_duplicate(X, y, random_state=None):
     """Oversampling mediante duplicación"""
