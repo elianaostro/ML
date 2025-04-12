@@ -60,14 +60,17 @@ def f1_score(y_true, y_pred, average='binary'):
     else:
         return 2 * (precision * recall) / (precision + recall)
 
-def roc_curve(y_true, y_scores):
+def roc_curve(y_true, y_proba):
     """Calcula la curva ROC"""
-    thresholds = np.sort(np.unique(y_scores))[::-1]
+    if y_proba.ndim > 1 and y_proba.shape[1] > 1:
+        y_proba = y_proba[:, 1]  # Use probability of positive class (index 1)
+    
+    thresholds = np.sort(np.unique(y_proba))[::-1]
     tpr = []
     fpr = []
     
     for thresh in thresholds:
-        y_pred = (y_scores >= thresh).astype(int)
+        y_pred = (y_proba >= thresh).astype(int)
         cm = confusion_matrix(y_true, y_pred)
         if cm.shape[0] == 1:  # Caso cuando solo hay una clase en las predicciones
             cm = np.vstack([cm, [0, 0]]) if y_true[0] == 1 else np.vstack([[0, 0], cm])
@@ -82,15 +85,20 @@ def roc_curve(y_true, y_scores):
     
     return np.array(fpr), np.array(tpr), thresholds
 
-def pr_curve(y_true, y_scores):
+def pr_curve(y_true, y_proba):
     """Calcula la curva Precision-Recall"""
-    thresholds = np.sort(np.unique(y_scores))[::-1]
+    # Extract probabilities for the positive class
+    if y_proba.ndim > 1 and y_proba.shape[1] > 1:
+        y_proba = y_proba[:, 1]  # Use probability of positive class (index 1)
+    
+    thresholds = np.sort(np.unique(y_proba))[::-1]
     precision = []
     recall = []
     
     for thresh in thresholds:
-        y_pred = (y_scores >= thresh).astype(int)
+        y_pred = (y_proba >= thresh).astype(int)
         cm = confusion_matrix(y_true, y_pred)
+        
         if cm.shape[0] == 1:  # Caso cuando solo hay una clase en las predicciones
             cm = np.vstack([cm, [0, 0]]) if y_true[0] == 1 else np.vstack([[0, 0], cm])
         
@@ -121,7 +129,9 @@ def auc(x, y):
     area = np.trapezoid(y, x) * direction
     return area
 
-def plot_confusion_matrix(y_true, y_pred, classes, title='Confusion matrix'):
+def plot_confusion_matrix(y_true, y_pred, classes=None, title='Confusion matrix'):
+    if classes is None:
+        classes = np.unique(y_true)
     """Grafica la matriz de confusión"""
     cm = confusion_matrix(y_true, y_pred, classes)
     
@@ -144,4 +154,75 @@ def plot_confusion_matrix(y_true, y_pred, classes, title='Confusion matrix'):
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
     
+    plt.show()
+
+def report_metrics(y_true, y_pred, y_proba, classes=None):
+    """
+    Reporta todas las métricas de performance.
+    
+    Args:
+        y_true: Etiquetas verdaderas.
+        y_pred: Etiquetas predichas.
+        y_proba: Puntajes de predicción.
+        classes: Lista de clases (opcional).
+    
+    Returns:
+        Un diccionario con todas las métricas calculadas.
+    """
+    metrics = {}
+    metrics['confusion_matrix'] = confusion_matrix(y_true, y_pred, classes)
+    metrics['accuracy'] = accuracy_score(y_true, y_pred)
+    metrics['precision'] = precision_score(y_true, y_pred, average='binary')
+    metrics['recall'] = recall_score(y_true, y_pred, average='binary')
+    metrics['f1_score'] = f1_score(y_true, y_pred, average='binary')
+    
+    precision, recall, pr_thresholds = pr_curve(y_true, y_proba)
+    metrics['pr_curve'] = (precision, recall, pr_thresholds)
+    metrics['auc_pr'] = auc(recall, precision)
+    
+    fpr, tpr, roc_thresholds = roc_curve(y_true, y_proba)
+    metrics['roc_curve'] = (fpr, tpr, roc_thresholds)
+    metrics['auc_roc'] = auc(fpr, tpr)
+    
+    return metrics
+
+def display_metrics(y_true, y_pred, y_proba, classes=None):
+    """
+    Calcula y muestra las métricas de performance.
+    
+    Args:
+        y_true: Etiquetas verdaderas.
+        y_pred: Etiquetas predichas.
+        y_proba: Puntajes de predicción.
+        classes: Lista de clases (opcional).
+    """
+    metrics = report_metrics(y_true, y_pred, y_proba, classes)
+    
+    print("\nAccuracy: {:.2f}".format(metrics['accuracy']))
+    print("Precision: {:.2f}".format(metrics['precision']))
+    print("Recall: {:.2f}".format(metrics['recall']))
+    print("F1-Score: {:.2f}".format(metrics['f1_score']))
+    print("\nAUC-PR: {:.2f}".format(metrics['auc_pr']))
+    print("AUC-ROC: {:.2f}".format(metrics['auc_roc']))
+    plot_confusion_matrix(y_true, y_pred, classes=classes)
+    
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+    
+    # Plot Precision-Recall Curve
+    precision, recall, _ = metrics['pr_curve']
+    axes[0].plot(recall, precision, label="PR Curve")
+    axes[0].set_xlabel("Recall")
+    axes[0].set_ylabel("Precision")
+    axes[0].set_title("Precision-Recall Curve")
+    axes[0].legend()
+    
+    # Plot ROC Curve
+    fpr, tpr, _ = metrics['roc_curve']
+    axes[1].plot(fpr, tpr, label="ROC Curve")
+    axes[1].set_xlabel("False Positive Rate")
+    axes[1].set_ylabel("True Positive Rate")
+    axes[1].set_title("ROC Curve")
+    axes[1].legend()
+    
+    plt.tight_layout()
     plt.show()

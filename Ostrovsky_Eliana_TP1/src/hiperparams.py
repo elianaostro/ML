@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from src.metrics import print_metrics
 from src.models import LinearRegression
-from src.preprocessing import normalize, split_and_normalize
+from Ostrovsky_Eliana_TP1.src.preprocessing1 import normalize, split_and_normalize
 
 
 def plot_regularization_coefficients(df, lambdas, reg_type="ridge"):

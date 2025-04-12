@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 from src.hiperparams import find_best_lambda_cross_validation, find_best_lambda_validation, optimal_lambda, plot_regularization_coefficients
-from src.preprocessing import add_relative_location, area_x_price, generate_polynomial_features
+from Ostrovsky_Eliana_TP1.src.preprocessing1 import add_relative_location, area_x_price, generate_polynomial_features
 from src.utils import estimate, inicialite, try_model
 
 def main():

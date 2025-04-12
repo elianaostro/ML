@@ -1,154 +1,50 @@
 import numpy as np
+import pandas as pd
 
-def train_test_split(X, y, test_size=0.2, random_state=None):
-    """Divide los datos en conjuntos de entrenamiento y prueba"""
-    if random_state is not None:
-        np.random.seed(random_state)
-    
-    n_samples = X.shape[0]
-    test_samples = int(n_samples * test_size)
-    
-    indices = np.random.permutation(n_samples)
-    test_idx = indices[:test_samples]
-    train_idx = indices[test_samples:]
-    
-    return X[train_idx], X[test_idx], y[train_idx], y[test_idx]
+def clean_data(df):
+    df['CellAdhesion'] = df['CellAdhesion'].apply(lambda x: x if 0 <= x <= 1 else np.nan)
+    df['NuclearMembrane'] = df['NuclearMembrane'].apply(lambda x: x if 1 <= x <= 5 else np.nan)
+    df['OxygenSaturation'] = df['OxygenSaturation'].apply(lambda x: x if 0 <= x <= 100 else np.nan)
+    df['Vascularization'] = df['Vascularization'].apply(lambda x: x if 0 <= x <= 10 else np.nan)
+    df['InflammationMarkers'] = df['InflammationMarkers'].apply(lambda x: x if 0 <= x <= 100 else np.nan)
 
-def standard_scaler(X):
-    """Normalización estándar (z-score)"""
-    mean = np.mean(X, axis=0)
-    std = np.std(X, axis=0)
-    std[std == 0] = 1.0  # Evitar división por cero
-    return (X - mean) / std, mean, std
+    df[df.select_dtypes(include=[np.number]).columns] = df.select_dtypes(include=[np.number]).apply(
+        lambda col: col.map(lambda x: np.nan if x < 0 else x)
+    )
 
-def minmax_scaler(X):
-    """Normalización min-max"""
-    min_vals = np.min(X, axis=0)
-    max_vals = np.max(X, axis=0)
-    range_vals = max_vals - min_vals
-    range_vals[range_vals == 0] = 1.0  # Evitar división por cero
-    return (X - min_vals) / range_vals, min_vals, max_vals
+    numeric_columns = [
+        "CellSize", "CellShape", "NucleusDensity", "ChromatinTexture",
+        "CytoplasmSize", "CellAdhesion", "MitosisRate", "NuclearMembrane",
+        "GrowthFactor", "OxygenSaturation", "Vascularization", "InflammationMarkers"
+    ]
+    Q1 = df[numeric_columns].quantile(0.05)
+    Q3 = df[numeric_columns].quantile(0.95)
+    IQR = Q3 - Q1
 
-def knn_impute(X, k=5, metric='euclidean'):
-    """
-    Implementación básica de KNN Imputer
-    
-    Args:
-        X: Matriz de datos con NaN (n_samples, n_features)
-        k: Número de vecinos a considerar
-        metric: Métrica de distancia ('euclidean' o 'manhattan')
+    for column in numeric_columns:
+        df[column] = df[column].mask(
+            (df[column] < (Q1[column] - 1.5 * IQR[column])) | 
+            (df[column] > (Q3[column] + 1.5 * IQR[column]))
+        )
         
-    Returns:
-        Matriz con valores imputados
-    """
-    X_imputed = X.copy()
-    _, n_features = X.shape
-    
-    # Para cada feature con NaN
-    for col in range(n_features):
-        nan_mask = np.isnan(X[:, col])
-        
-        if not np.any(nan_mask):
-            continue  # No hay NaN en esta columna
-            
-        # Indices de muestras con valores conocidos
-        known_idx = np.where(~nan_mask)[0]
-        unknown_idx = np.where(nan_mask)[0]
-        
-        # Para cada muestra con NaN
-        for idx in unknown_idx:
-            # Calcular distancias
-            if metric == 'euclidean':
-                distances = np.sqrt(np.sum((X[known_idx] - X[idx])**2, axis=1))
-            elif metric == 'manhattan':
-                distances = np.sum(np.abs(X[known_idx] - X[idx]), axis=1)
-            else:
-                raise ValueError("Métrica no soportada")
-            
-            # Encontrar k vecinos más cercanos
-            nearest_indices = known_idx[np.argsort(distances)[:k]]
-            
-            # Imputar con la media de los vecinos (ignorando NaN en vecinos)
-            valid_values = X[nearest_indices, col]
-            valid_values = valid_values[~np.isnan(valid_values)]
-            
-            if len(valid_values) > 0:
-                X_imputed[idx, col] = np.mean(valid_values)
-            else:
-                # Si todos los vecinos tienen NaN, usar la media global
-                X_imputed[idx, col] = np.nanmean(X[:, col])
-    
-    return X_imputed
+    df['NaN_Count'] = df.isna().sum(axis=1)
+    df = df[df['NaN_Count'] < 7]
+    return df.drop(columns=['NaN_Count'])
 
-def knn_impute_fast(X, k=5):
-    """Versión optimizada de KNN Imputer usando operaciones vectorizadas"""
-    X_imputed = X.copy()
-    _, n_features = X.shape
-    
-    for col in range(n_features):
-        nan_mask = np.isnan(X[:, col])
-        if not nan_mask.any():
-            continue
-            
-        # Calcular distancias entre muestras con NaN y sin NaN
-        known_samples = X[~nan_mask]
-        unknown_samples = X[nan_mask]
-        
-        # Distancia euclidiana vectorizada
-        distances = np.sqrt(((known_samples[:, np.newaxis] - unknown_samples)**2).sum(axis=2))
-        
-        # Para cada muestra con NaN, encontrar k vecinos más cercanos
-        for i, sample_idx in enumerate(np.where(nan_mask)[0]):
-            nearest_indices = np.argsort(distances[:, i])[:k]
-            valid_values = known_samples[nearest_indices, col]
-            valid_values = valid_values[~np.isnan(valid_values)]
-            
-            X_imputed[sample_idx, col] = np.mean(valid_values) if len(valid_values) > 0 else np.nanmean(X[:, col])
-    
-    return X_imputed
-
-def handle_missing_values(X, strategy='mean', k=5, metric='euclidean'):
-    """
-    Manejo de valores faltantes con múltiples estrategias
-    
-    Args:
-        X: Matriz de datos (n_samples, n_features)
-        strategy: 'mean', 'median', 'zero', 'knn'
-        k: Número de vecinos para KNN (solo si strategy='knn')
-        metric: 'euclidean' o 'manhattan' (solo si strategy='knn')
-        
-    Returns:
-        Matriz sin valores faltantes
-    """
-    if not isinstance(X, np.ndarray):
-        X = np.array(X)
-    
-    if not np.isnan(X).any():
-        return X  # No hay valores faltantes
-    
-    if strategy == 'mean':
-        fill_value = np.nanmean(X, axis=0)
-        return np.where(np.isnan(X), fill_value, X)
-    elif strategy == 'median':
-        fill_value = np.nanmedian(X, axis=0)
-        return np.where(np.isnan(X), fill_value, X)
-    elif strategy == 'zero':
-        return np.where(np.isnan(X), 0, X)
-    elif strategy == 'knn':
-        return knn_impute(X, k=k, metric=metric)
-    elif strategy == 'knn_fast':
-        return knn_impute_fast(X, k=k)
-    else:
-        raise ValueError(f"Estrategia no válida: {strategy}. Use 'mean', 'median', 'zero' o 'knn'")
-
+def handle_categorical_features(df):
+    df['Epthlial'] = np.where(df['CellType'].isna(), np.nan, (df['CellType'] == 'Epthlial').astype(int))
+    df['Mesnchymal'] = np.where(df['CellType'].isna(), np.nan, (df['CellType'] == 'Mesnchymal').astype(int))
+    df['GeneticMutation'] = (df['GeneticMutation'] == 'Presnt').astype(int)
+    df = df.drop(columns=["CellType"])
+    return df
 
 def detect_outliers_iqr(X, factor=1.5):
     """
     Detecta outliers usando el método del rango intercuartílico (IQR).
     
     Parámetros:
-    - X: Datos de características (numpy array)
-    - factor: Factor multiplicador del IQR (típicamente 1.5)
+    - X (np.array): Datos de características
+    - factor (float): Factor multiplicador del IQR (típicamente 1.5)
     
     Retorna:
     - Máscara booleana de outliers (True = outlier)
@@ -162,89 +58,242 @@ def detect_outliers_iqr(X, factor=1.5):
     
     return (X < lower_bound) | (X > upper_bound)
 
+def knn_value(base_row, df, target_col, feature_cols, k):
+    """
+    Calcula el valor usando k-vecinos más cercanos para una fila dada.
 
-def oversample_duplicate(X, y, random_state=None):
-    """Oversampling mediante duplicación"""
-    if random_state is not None:
-        np.random.seed(random_state)
-    
-    classes, counts = np.unique(y, return_counts=True)
-    max_count = np.max(counts)
-    
-    X_resampled = [X]
-    y_resampled = [y]
-    
-    for class_idx, count in zip(classes, counts):
-        if count < max_count:
-            X_class = X[y == class_idx]
-            y_class = y[y == class_idx]
-            
-            n_needed = max_count - count
-            indices = np.random.choice(X_class.shape[0], size=n_needed, replace=True)
-            
-            X_resampled.append(X_class[indices])
-            y_resampled.append(y_class[indices])
-    
-    return np.concatenate(X_resampled), np.concatenate(y_resampled)
+    Parámetros:
+    base_row (pd.Series): La fila para la cual calcular el valor de k-vecinos.
+    df (pd.DataFrame): El DataFrame que contiene los datos.
+    target_col (str): Nombre de la columna objetivo cuyo valor se quiere predecir.
+    feature_cols (list): Lista de nombres de columnas para calcular la distancia.
+    k (int): Número de vecinos más cercanos a considerar.
 
-def undersample_random(X, y, random_state=None):
-    """Undersampling aleatorio"""
-    if random_state is not None:
-        np.random.seed(random_state)
+    Returns:
+    El valor más común entre los k-vecinos más cercanos en la columna objetivo.
+    Si no hay un valor común, devuelve NaN.
+    """
+
+    df_copy = df.copy()
+    df_copy['distance'] = np.linalg.norm(df_copy[feature_cols].values - base_row[feature_cols].values, axis=1)
+    nearest_neighbors = df_copy.nsmallest(k, 'distance')
+    most_common_value = nearest_neighbors[target_col].dropna().mode()
+    df_copy.drop(columns=['distance'], inplace=True)
     
-    classes, counts = np.unique(y, return_counts=True)
-    min_count = np.min(counts)
+    return most_common_value[0] if not most_common_value.empty else np.nan
+
+def normalize(X, means=None, stds=None, exclude_cols=None):
+    """
+    Normaliza columnas numéricas en el dataset.
     
-    X_resampled = []
-    y_resampled = []
-    
-    for class_idx in classes:
-        X_class = X[y == class_idx]
-        y_class = y[y == class_idx]
+    Args:
+        X (pd.DataFrame): DataFrame a normalizar
+        means (pd.Series, optional): Medias a usar para normalización
+        stds (pd.Series, optional): Desviaciones estándar a usar para normalización
+        exclude_cols (list, optional): Columnas a excluir de la normalización
         
-        indices = np.random.choice(X_class.shape[0], size=min_count, replace=False)
-        
-        X_resampled.append(X_class[indices])
-        y_resampled.append(y_class[indices])
+    Returns:
+        X_norm (pd.DataFrame): DataFrame normalizado
+        means (pd.Series): Medias usadas para normalización
+        stds (pd.Series): Desviaciones estándar usadas para normalización
+    """
+    X_norm = X.copy()
     
-    return np.concatenate(X_resampled), np.concatenate(y_resampled)
+    # Determinar qué columnas normalizar
+    if exclude_cols is None:
+        exclude_cols = []
+    
+    # Seleccionar columnas numéricas excluyendo las especificadas
+    numeric_cols = X.select_dtypes(include=np.number).columns.difference(exclude_cols)
+    
+    # Si no se proporcionan medias y desviaciones, calcularlas
+    if means is None:
+        means = X[numeric_cols].mean()
+    if stds is None:
+        stds = X[numeric_cols].std()
+    
+    # Normalizar
+    X_norm[numeric_cols] = (X[numeric_cols] - means) / (stds + 1e-8)
+    
+    return X_norm, means, stds
 
-def simple_smote(X, y, k=5, random_state=None):
-    """Implementación simplificada de SMOTE"""
+def handle_missing_values(df, strategy='mean', train_df=None, k=5):
+    """
+    Maneja valores faltantes en un DataFrame usando múltiples estrategias.
+    
+    Args:
+        df (pd.DataFrame): DataFrame con posibles valores faltantes
+        strategy (str): Estrategia de imputación ('mean', 'median', 'zero', 'knn')
+        train_df (pd.DataFrame, optional): DataFrame de entrenamiento para imputar en validación
+        k (int): Número de vecinos para KNN (solo si strategy='knn')
+        
+    Returns:
+        pd.DataFrame: DataFrame con valores faltantes imputados
+    """
+    df_imputed = df.copy()
+    
+    numeric_cols = df.select_dtypes(include=np.number).columns
+    valid_numeric_cols = [col for col in numeric_cols if not df[col].isnull().all()]
+    
+    reference_df = train_df if train_df is not None else df
+    
+    if strategy == 'mean':
+        means = reference_df[valid_numeric_cols].mean()
+        for col in valid_numeric_cols:
+            df_imputed[col].fillna(means[col], inplace=True)
+
+    elif strategy == 'knn':
+        combined_df = pd.concat([reference_df, df_imputed]) if train_df is not None else df_imputed
+        
+        for col in valid_numeric_cols:
+            rows_with_nan = df_imputed[df_imputed[col].isnull()].index
+            feature_cols = [c for c in valid_numeric_cols if c != col]
+            
+            if not feature_cols:
+                mean_value = reference_df[col].mean()
+                df_imputed.loc[rows_with_nan, col] = mean_value
+                continue
+            
+            for idx in rows_with_nan:
+                current_row = df_imputed.loc[idx]
+                known_df = combined_df[~combined_df[col].isnull()]
+                if known_df.empty:
+                    mean_value = reference_df[col].mean()
+                    df_imputed.loc[idx, col] = mean_value
+                else:
+                    knn_result = knn_value(current_row, known_df, col, feature_cols, k)
+                    df_imputed.loc[idx, col] = knn_result
+    return df_imputed
+
+def split_data(df, target_column, train_ratio=0.8, random_state=None):
+    '''
+    Split the DataFrame into training and validation sets.
+    
+    Parameters:
+    df (pandas.DataFrame): The input DataFrame.
+    target_column (str): The name of the target column.
+    train_ratio (float): The ratio of training data to total data.
+    random_state (int): Random seed for reproducibility.
+    
+    Returns:
+    X_train (pandas.DataFrame): The training features.
+    X_val (pandas.DataFrame): The validation features.
+    y_train (np.ndarray): The training target values.
+    y_val (np.ndarray): The validation target values.
+    '''
+    df_shuffled = df.sample(frac=1, random_state=random_state).reset_index(drop=True)
+    
+    train_size = int(train_ratio * len(df_shuffled))
+    
+    X_train = df_shuffled.iloc[:train_size].drop(columns=[target_column])
+    X_val = df_shuffled.iloc[train_size:].drop(columns=[target_column])
+    
+    y_train = df_shuffled.iloc[:train_size][target_column].values
+    y_val = df_shuffled.iloc[train_size:][target_column].values
+    
+    return X_train, X_val, y_train, y_val
+
+
+def split_and_normalize(df, target_column, exclude_cols=None, train_ratio=0.8, random_state=None):
+    """
+    Divide los datos y normaliza las características.
+    
+    Args:
+        df (pd.DataFrame): DataFrame a dividir y normalizar
+        target_column (str): Nombre de la columna objetivo
+        exclude_cols (list, optional): Columnas a excluir de la normalización
+        train_ratio (float): Proporción de datos para entrenamiento
+        random_state (int): Semilla aleatoria para reproducibilidad
+        
+    Returns:
+        X_train (pd.DataFrame): Características de entrenamiento normalizadas
+        X_val (pd.DataFrame): Características de validación normalizadas
+        y_train (np.ndarray): Valores objetivo de entrenamiento
+        y_val (np.ndarray): Valores objetivo de validación
+        means (pd.Series): Medias usadas para normalización
+        stds (pd.Series): Desviaciones estándar usadas para normalización
+    """
+    # Dividir los datos
+    X_train, X_val, y_train, y_val = split_data(df, target_column, train_ratio, random_state)
+    
+    # Normalizar
+    X_train_norm, means, stds = normalize(X_train, exclude_cols=exclude_cols)
+    X_val_norm, _, _ = normalize(X_val, means=means, stds=stds, exclude_cols=exclude_cols)
+
+    X_train_norm = handle_missing_values(X_train_norm, strategy='knn', train_df=X_train)
+    X_val_norm = handle_missing_values(X_val_norm, strategy='knn', train_df=X_train)
+    
+    return X_train_norm, X_val_norm, y_train, y_val, means, stds
+
+def stratified_split(X, y, train_ratio=0.8, random_state=None):
+    """
+    División estratificada de datos en conjuntos de entrenamiento y prueba.
+    Mantiene la proporción de clases en ambos conjuntos.
+    
+    Parámetros:
+    - X: Datos de características (numpy array o DataFrame)
+    - y: Etiquetas (numpy array)
+    - train_ratio: Proporción del conjunto de entrenamiento (0-1)
+    - random_state: Semilla para reproducibilidad
+    
+    Retorna:
+    - X_train, X_test, y_train, y_test
+    """
     if random_state is not None:
         np.random.seed(random_state)
     
-    classes, counts = np.unique(y, return_counts=True)
-    max_count = np.max(counts)
+    classes = np.unique(y)
+    class_indices = {cls: np.where(y == cls)[0] for cls in classes}
     
-    X_resampled = [X]
-    y_resampled = [y]
+    train_indices = []
+    test_indices = []
     
-    for class_idx, count in zip(classes, counts):
-        if count < max_count:
-            X_class = X[y == class_idx]
-            n_needed = max_count - count
-            
-            # Encontrar k vecinos más cercanos para cada muestra
-            distances = np.sqrt(((X_class[:, np.newaxis] - X_class)**2).sum(axis=2))
-            np.fill_diagonal(distances, np.inf)
-            knn_indices = np.argpartition(distances, k, axis=1)[:, :k]
-            
-            synthetic_samples = []
-            for i in range(n_needed):
-                # Seleccionar una muestra aleatoria
-                sample_idx = np.random.randint(X_class.shape[0])
-                # Seleccionar un vecino aleatorio
-                neighbor_idx = np.random.choice(knn_indices[sample_idx])
-                
-                # Crear muestra sintética
-                diff = X_class[neighbor_idx] - X_class[sample_idx]
-                alpha = np.random.random()
-                synthetic = X_class[sample_idx] + alpha * diff
-                
-                synthetic_samples.append(synthetic)
-            
-            X_resampled.append(np.array(synthetic_samples))
-            y_resampled.append(np.full(n_needed, class_idx))
+    for cls in classes:
+        indices = class_indices[cls]
+        np.random.shuffle(indices)
+        
+        n_train = int(len(indices) * train_ratio)
+        
+        train_indices.extend(indices[:n_train])
+        test_indices.extend(indices[n_train:])
     
-    return np.concatenate(X_resampled), np.concatenate(y_resampled)
+    # Mezclar los índices para evitar orden por clase
+    np.random.shuffle(train_indices)
+    np.random.shuffle(test_indices)
+    
+    return X.iloc[train_indices] if hasattr(X, 'iloc') else X[train_indices], \
+           X.iloc[test_indices] if hasattr(X, 'iloc') else X[test_indices], \
+           y[train_indices], y[test_indices]
+
+def stratified_split_and_normalize(df, target_column, exclude_cols=None, train_ratio=0.8, random_state=None):
+    """
+    Divide los datos y normaliza las características.
+    Args:
+    df (pd.DataFrame): DataFrame a dividir y normalizar
+    target_column (str): Nombre de la columna objetivo
+    exclude_cols (list, optional): Columnas a excluir de la normalización
+    train_ratio (float): Proporción de datos para entrenamiento
+    random_state (int): Semilla aleatoria para reproducibilidad
+    Returns:
+    X_train (pd.DataFrame): Características de entrenamiento normalizadas
+    X_val (pd.DataFrame): Características de validación normalizadas
+    y_train (np.ndarray): Valores objetivo de entrenamiento
+    y_val (np.ndarray): Valores objetivo de validación
+    means (pd.Series): Medias usadas para normalización
+    stds (pd.Series): Desviaciones estándar usadas para normalización
+    """
+    # Separar características y objetivo
+    X = df.drop(columns=[target_column])
+    y = df[target_column].values
+    
+    # Dividir los datos usando la función stratified_split
+    X_train, X_val, y_train, y_val = stratified_split(X, y, 1-train_ratio, random_state)
+    
+    # Normalizar
+    X_train_norm, means, stds = normalize(X_train, exclude_cols=exclude_cols)
+    X_val_norm, _, _ = normalize(X_val, means=means, stds=stds, exclude_cols=exclude_cols)
+    
+    X_train_norm = handle_missing_values(X_train_norm, strategy='knn', train_df=X_train)
+    X_val_norm = handle_missing_values(X_val_norm, strategy='knn', train_df=X_train)
+    
+    return X_train_norm, X_val_norm, y_train, y_val, means, stds

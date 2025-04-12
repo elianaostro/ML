@@ -2,7 +2,7 @@ import pandas as pd
 
 from src.metrics import print_metrics
 from src.models import LinearRegression
-from src.preprocessing import split_and_normalize
+from Ostrovsky_Eliana_TP1.src.preprocessing1 import split_and_normalize
 
 def try_model(df, cols=['area_m2', 'is_house', 'has_pool', 'age', 'lat', 'lon', 'area_units'], method='pseudoinverse'):
     '''

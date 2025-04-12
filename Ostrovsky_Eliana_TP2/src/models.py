@@ -34,7 +34,7 @@ class LogisticRegression:
             return (-1/m) * np.sum(weight_vector * (y * np.log(h + 1e-15) + (1-y) * np.log(1-h + 1e-15))) + l2_reg
         else:
             return (-1/m) * np.sum(y * np.log(h + 1e-15) + (1-y) * np.log(1-h + 1e-15)) + l2_reg
-    
+        
     def fit(self, X, y):
         """Entrena el modelo con los datos X e y"""
         # Convertir y a numpy array si no lo es
@@ -90,6 +90,12 @@ class LogisticRegression:
         """Predice las clases para los datos X"""
         proba = self.predict_proba(X)[:, 1]
         return (proba >= threshold).astype(int)
+    
+    def print_coefficients(self):
+        print("Logistic Regression Coefficients:")
+        for idx, coef in enumerate(self.weights):
+            print(f"Feature {idx}: {coef:.4f}")
+        print(f"Bias: {self.bias:.4f}")
 
 class MultinomialLogisticRegression:
     def __init__(self, learning_rate=0.01, n_iter=1000, lambda_=0.1):
@@ -152,6 +158,14 @@ class MultinomialLogisticRegression:
         """Predice las clases para los datos X"""
         proba = self.predict_proba(X)
         return self.classes_[np.argmax(proba, axis=1)]
+    
+    def print_coefficients(self):
+        print("Multinomial Logistic Regression Coefficients:")
+        for i, cls in enumerate(self.classes_):
+            print(f"Class {cls}:")
+            for j, coef in enumerate(self.weights[:, i]):
+                print(f"  Feature {j}: {coef:.4f}")
+        print()
 
 class LDA:
     def __init__(self):
@@ -215,6 +229,14 @@ class LDA:
         """Predice las clases para los datos X"""
         proba = self.predict_proba(X)
         return self.classes_[np.argmax(proba, axis=1)]
+    
+    def print_coefficients(self):
+        print("LDA Coefficients:")
+        for i, cls in enumerate(self.classes_):
+            print(f"Class {cls}:")
+            for j, mean in enumerate(self.means[i]):
+                print(f"  Feature {j}: {mean:.4f}")
+        print()
 
 class DecisionTree:
     def __init__(self, max_depth=None, min_samples_split=2, criterion='gini'):
@@ -339,6 +361,19 @@ class DecisionTree:
     def predict(self, X):
         """Predice las clases para los datos X"""
         return np.array([self._predict_sample(x, self.tree) for x in X])
+    
+    def print_tree(self, tree=None, depth=0):
+        """Imprime el árbol de decisión"""
+        if tree is None:
+            tree = self.tree
+        
+        if tree['is_leaf']:
+            print(f"{' ' * depth}Leaf: Class {tree['class']}")
+            return
+        
+        print(f"{' ' * depth}Node: Feature {tree['feature']} <= {tree['threshold']}")
+        self.print_tree(tree['left'], depth + 2)
+        self.print_tree(tree['right'], depth + 2)
 
 class RandomForest:
     def __init__(self, n_estimators=100, max_depth=None, min_samples_split=2, 
