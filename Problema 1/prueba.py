@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from models import LogisticRegression
 from preprocessing import train_test_split, standard_scaler, oversample_duplicate, undersample_random, simple_smote
-from metrics import accuracy_score, precision_score, recall_score, f1_score, roc_curve, pr_curve, auc, plot_confusion_matrix
+from metrics1 import accuracy_score, precision_score, recall_score, f1_score, roc_curve, pr_curve, auc, plot_confusion_matrix
 from utils import detect_outliers_iqr, stratified_train_test_split, plot_feature_distributions, plot_correlation_matrix, class_balance_report
 
 # Configuración inicial

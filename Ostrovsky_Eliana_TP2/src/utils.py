@@ -1,203 +1,203 @@
+# src/utils.py
 import numpy as np
-import matplotlib.pyplot as plt
-from metrics import accuracy_score
 import pandas as pd
+import matplotlib.pyplot as plt
+import pickle
+from typing import List, Dict, Optional, Union, Tuple, Any, Sequence
 
-def class_balance_report(y, class_names=None):
-    """Genera un reporte del balance de clases."""
-    y = y.astype(str)  # Convert all elements to strings to avoid type comparison issues
-    classes, counts = np.unique(y, return_counts=True)
-    total = len(y)
+# Type Definitions for clarity
+ArrayLike = Union[List[Any], np.ndarray, pd.Series]
+Model = Any # Placeholder for generic model type
+Numeric = Union[int, float]
+ClassWeights = Optional[Union[Dict[Any, float], str]] # For class weights
+Labels = Optional[Sequence[Any]] 
+TargetNames = Optional[List[str]]
+
+def print_class_balance_report(
+    y: ArrayLike, 
+    class_names: TargetNames = None
+) -> Dict[str, Any]:
+    """
+    Calculates and prints a report on the balance of classes in the target variable.
+
+    Args:
+        y (ArrayLike): Array or Series containing the target class labels.
+        class_names (TargetNames, optional): List of names corresponding to the unique 
+            classes found in `y`. If None, class labels are used directly as names (converted 
+            to string). Length must match the number of unique classes. Defaults to None.
+
+    Returns:
+        Dict[str, Any]: A dictionary containing the calculated report details:
+            - 'counts' (Dict[str, int]): Count of samples per class name.
+            - 'proportions' (Dict[str, float]): Proportion of samples per class name.
+            - 'total_samples' (int): Total number of samples.
+            
+    Raises:
+        ValueError: If `class_names` is provided and its length doesn't match the 
+                    number of unique classes in `y`.
+    """
+    y_arr = np.asarray(y)
+    # Ensure consistent type for finding unique labels, convert to string
+    y_str = y_arr.astype(str) 
     
+    unique_classes, counts = np.unique(y_str, return_counts=True)
+    total_samples = len(y_arr)
+    
+    # Determine class names to use
     if class_names is None:
-        class_names = [str(cls) for cls in classes]
-    elif len(class_names) != len(classes):
-        raise ValueError("La longitud de class_names no coincide con el número de clases únicas")
-    
-    # Crear mapeo de clase a nombre
-    class_map = {cls: name for cls, name in zip(classes, class_names)}
-    
-    report = {
-        'counts': {class_map[cls]: count for cls, count in zip(classes, counts)},
-        'proportions': {class_map[cls]: count/total for cls, count in zip(classes, counts)},
-        'total_samples': total
+        effective_class_names = list(unique_classes) # Use the string versions found
+    else:
+        if len(class_names) != len(unique_classes):
+            raise ValueError(f"Length of class_names ({len(class_names)}) must match the "
+                             f"number of unique classes found in y ({len(unique_classes)}).")
+        effective_class_names = list(class_names) # Use provided names
+        
+    # Map unique string labels to effective names (handles case where labels != names)
+    class_map = {cls_str: name for cls_str, name in zip(unique_classes, effective_class_names)}
+
+    # Build the report dictionary
+    report: Dict[str, Any] = {
+        'counts': {},
+        'proportions': {},
+        'total_samples': total_samples
     }
-    
-    print("Reporte de Balance de Clases:")
-    print(f"Total de muestras: {total}")
-    print("\nConteo por clase:")
-    for cls, count in report['counts'].items():
-        print(f"- {cls}: {count} muestras ({report['proportions'][cls]:.2%})")
-    
+    for cls_str, count in zip(unique_classes, counts):
+        name = class_map[cls_str]
+        proportion = count / total_samples if total_samples > 0 else 0.0
+        report['counts'][name] = count
+        report['proportions'][name] = proportion
+
+    # Print the formatted report
+    print("\nClass Balance Report")
+    print("=" * 20)
+    print(f"Total samples: {total_samples}")
+    print("\nCounts per class:")
+    # Sort items for consistent print order
+    for name, count in sorted(report['counts'].items()):
+        proportion = report['proportions'][name]
+        print(f"- {name}: {count} samples ({proportion:.2%})")
+    print("-" * 20)
+
     return report
 
-def apply_cost_sensitive_weights(y, class_weights='balanced'):
-    """
-    Calcula pesos para muestras según el balance de clases.
-    
-    Parámetros:
-    - y: Etiquetas de clase
-    - class_weights: 'balanced' para pesos inversamente proporcionales a frecuencia de clase,
-                    o dict con pesos personalizados {0: w0, 1: w1}
-    
-    Retorna:
-    - Array de pesos para cada muestra
-    """
 
-    if isinstance(class_weights, dict):
-        return np.array([class_weights[cls] for cls in y])
-    
-    # Calcular pesos balanceados
-    classes, counts = np.unique(y, return_counts=True)
-    n_samples = len(y)
-    n_classes = len(classes)
-    
-    weights = n_samples / (n_classes * counts)
-    weight_map = {cls: weight for cls, weight in zip(classes, weights)}
-    
-    return np.array([weight_map[cls] for cls in y])
+def calculate_sample_weights(
+    y: ArrayLike, 
+    class_weights: ClassWeights = 'balanced'
+) -> np.ndarray:
+    """
+    Calculates sample weights based on class distribution.
 
-def plot_decision_boundary(model, X, y, title="Decision Boundary", step=0.02, figsize=(10, 6)):
-    """
-    Grafica la frontera de decisión de un modelo 2D.
-    
-    Parámetros:
-    - model: Modelo entrenado con métodos predict() y predict_proba()
-    - X: Datos de características (debe tener exactamente 2 características)
-    - y: Etiquetas verdaderas
-    - title: Título del gráfico
-    - step: Paso para la malla de predicción
-    - figsize: Tamaño de la figura
-    """
-    if X.shape[1] != 2:
-        raise ValueError("Esta función solo funciona para datos 2D")
-    
-    # Crear malla para predicción
-    x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-    y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-    xx, yy = np.meshgrid(np.arange(x_min, x_max, step),
-                         np.arange(y_min, y_max, step))
-    
-    # Predecir para cada punto de la malla
-    Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-    Z = Z.reshape(xx.shape)
-    
-    # Graficar
-    plt.figure(figsize=figsize)
-    plt.contourf(xx, yy, Z, alpha=0.4)
-    plt.scatter(X[:, 0], X[:, 1], c=y, edgecolor='k', s=20)
-    plt.title(title)
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
-    plt.show()
+    Useful for handling imbalanced datasets during model training by giving 
+    more weight to samples from under-represented classes.
 
-def learning_curve(model, X, y, train_sizes=np.linspace(0.1, 1.0, 5), cv=5, random_state=None):
-    """
-    Genera curva de aprendizaje para un modelo.
-    
-    Parámetros:
-    - model: Modelo a evaluar
-    - X: Datos de características
-    - y: Etiquetas
-    - train_sizes: Proporciones del conjunto de entrenamiento a evaluar
-    - cv: Número de divisiones para validación cruzada
-    - random_state: Semilla para reproducibilidad
-    
-    Retorna:
-    - train_scores: Puntajes de entrenamiento para cada tamaño
-    - val_scores: Puntajes de validación para cada tamaño
-    """
-    if random_state is not None:
-        np.random.seed(random_state)
-    
-    n_samples = X.shape[0]
-    train_sizes_abs = (train_sizes * n_samples).astype(int)
-    
-    train_scores = []
-    val_scores = []
-    
-    for size in train_sizes_abs:
-        fold_train_scores = []
-        fold_val_scores = []
+    Args:
+        y (ArrayLike): Array or Series containing the target class labels.
+        class_weights (ClassWeights, optional): Strategy for weights:
+            - 'balanced': Automatically compute weights inversely proportional 
+                          to class frequencies (n_samples / (n_classes * n_samples_class)).
+            - dict: A dictionary mapping class labels to specific weight values 
+                    (e.g., {0: 0.8, 1: 1.2}).
+            - None: No weights are applied (returns array of ones).
+            Defaults to 'balanced'.
+
+    Returns:
+        np.ndarray: An array of sample weights, one for each sample in `y`.
         
-        for _ in range(cv):
-            # Crear división aleatoria
-            indices = np.random.permutation(n_samples)
-            train_idx, val_idx = indices[:size], indices[size:]
+    Raises:
+        ValueError: If `class_weights` is a dict but contains labels not found in `y`.
+    """
+    y_arr = np.asarray(y)
+    n_samples = len(y_arr)
+
+    if class_weights is None:
+        return np.ones(n_samples, dtype=float) # Return uniform weights
+
+    elif isinstance(class_weights, dict):
+        # Apply weights directly from the provided dictionary
+        try:
+            # Use np.vectorize or list comprehension for mapping
+            # Need to handle labels in dict not matching y values
+            unique_y = np.unique(y_arr)
+            if not all(cls in class_weights for cls in unique_y):
+                 missing = [cls for cls in unique_y if cls not in class_weights]
+                 print(f"Warning: class_weights dict missing weights for labels: {missing}. "
+                       f"Assigning weight 1.0 to these.")
             
-            X_train, y_train = X[train_idx], y[train_idx]
-            X_val, y_val = X[val_idx], y[val_idx]
-            
-            # Entrenar y evaluar
-            model.fit(X_train, y_train)
-            
-            train_pred = model.predict(X_train)
-            fold_train_scores.append(accuracy_score(y_train, train_pred))
-            
-            val_pred = model.predict(X_val)
-            fold_val_scores.append(accuracy_score(y_val, val_pred))
+            # Use get with default 1.0 for missing keys
+            sample_weights = np.array([class_weights.get(cls, 1.0) for cls in y_arr], dtype=float)
+            return sample_weights
+        except KeyError as e:
+             # This path might be less likely now with .get()
+             raise ValueError(f"Label {e} found in y but not in class_weights dictionary.") from e
+             
+    elif class_weights == 'balanced':
+        # Calculate balanced weights
+        unique_classes, counts = np.unique(y_arr, return_counts=True)
+        n_classes = len(unique_classes)
         
-        train_scores.append(np.mean(fold_train_scores))
-        val_scores.append(np.mean(fold_val_scores))
-    
-    # Graficar curva de aprendizaje
-    plt.figure(figsize=(8, 6))
-    plt.plot(train_sizes_abs, train_scores, 'o-', label="Training score")
-    plt.plot(train_sizes_abs, val_scores, 'o-', label="Validation score")
-    plt.xlabel("Training examples")
-    plt.ylabel("Accuracy")
-    plt.title("Learning Curve")
-    plt.legend()
-    plt.grid()
-    plt.show()
-    
-    return train_scores, val_scores
+        if n_classes < 2:
+            # print("Warning: Cannot compute balanced weights with fewer than 2 classes. Returning uniform weights.")
+            return np.ones(n_samples, dtype=float)
+        
+        # Calculate weights: n_samples / (n_classes * count_per_class)
+        # Handle potential division by zero if a class count is 0 (shouldn't happen with unique)
+        weights_per_class = n_samples / (n_classes * counts)
+        
+        # Create a mapping from class label to its calculated weight
+        weight_map = {cls: weight for cls, weight in zip(unique_classes, weights_per_class)}
+        
+        # Map weights back to each sample
+        sample_weights = np.array([weight_map[cls] for cls in y_arr], dtype=float)
+        return sample_weights
+        
+    else:
+        raise ValueError(f"Invalid class_weights value: {class_weights}. "
+                         "Expected 'balanced', None, or a dictionary.")
 
-def feature_importance_plot(model, feature_names, title="Feature Importance"):
+def save_model(model: Any, filename: str) -> None:
     """
-    Grafica la importancia de características para modelos basados en árboles.
-    
-    Parámetros:
-    - model: Modelo entrenado (RandomForest o DecisionTree)
-    - feature_names: Lista de nombres de características
-    - title: Título del gráfico
-    """
-    if not hasattr(model, 'feature_importances_'):
-        raise ValueError("El modelo no tiene atributo feature_importances_")
-    
-    importances = model.feature_importances_
-    indices = np.argsort(importances)[::-1]
-    
-    plt.figure(figsize=(10, 6))
-    plt.title(title)
-    plt.bar(range(len(importances)), importances[indices], align="center")
-    plt.xticks(range(len(importances)), [feature_names[i] for i in indices], rotation=90)
-    plt.xlim([-1, len(importances)])
-    plt.tight_layout()
-    plt.show()
+    Saves a trained model object to a file using pickle.
 
-def save_model(model, filename):
+    Args:
+        model (Any): The model object to save (e.g., a classifier instance).
+        filename (str): The path and name of the file to save the model to 
+                        (conventionally ending in .pkl or .joblib).
+                        
+    Raises:
+        IOError: If there's an error writing the file.
+        pickle.PicklingError: If the model object cannot be pickled.
     """
-    Guarda un modelo en disco usando pickle.
-    
-    Parámetros:
-    - model: Modelo a guardar
-    - filename: Nombre del archivo (incluyendo extensión .pkl)
-    """
-    import pickle
-    with open(filename, 'wb') as f:
-        pickle.dump(model, f)
+    try:
+        with open(filename, 'wb') as f:
+            pickle.dump(model, f)
+        print(f"Model successfully saved to {filename}")
+    except (IOError, pickle.PicklingError) as e:
+        print(f"Error saving model to {filename}: {e}")
+        raise # Re-raise the exception
 
-def load_model(filename):
+
+def load_model(filename: str) -> Any:
     """
-    Carga un modelo desde disco.
-    
-    Parámetros:
-    - filename: Nombre del archivo (incluyendo extensión .pkl)
-    
-    Retorna:
-    - Modelo cargado
+    Loads a model object from a file saved using pickle.
+
+    Args:
+        filename (str): The path and name of the file containing the saved model.
+
+    Returns:
+        Any: The loaded model object.
+
+    Raises:
+        IOError: If the file cannot be opened or read.
+        pickle.UnpicklingError: If the file content is not a valid pickle stream 
+                                or if there are issues deserializing the object 
+                                (e.g., missing class definitions).
     """
-    import pickle
-    with open(filename, 'rb') as f:
-        return pickle.load(f)
+    try:
+        with open(filename, 'rb') as f:
+            loaded_model = pickle.load(f)
+        print(f"Model successfully loaded from {filename}")
+        return loaded_model
+    except (IOError, pickle.UnpicklingError) as e:
+        print(f"Error loading model from {filename}: {e}")
+        raise # Re-raise the exception

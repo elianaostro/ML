@@ -1,136 +1,232 @@
 import numpy as np
 import pandas as pd
+from typing import Tuple, Optional, List, Dict, Union, Any
 
-def undersample_random(X_df, y_array, random_state=None):
+def random_undersample(
+    X_df: pd.DataFrame, 
+    y_array: np.ndarray, 
+    random_state: Optional[int] = None
+) -> Tuple[pd.DataFrame, np.ndarray]:
     """
-    Undersampling aleatorio manteniendo X como DataFrame y y como array.
-    
-    Parámetros:
-    - X_df (pd.DataFrame): Características
-    - y_array (np.ndarray): Target
-    - random_state (int): Semilla aleatoria
-    
-    Retorna:
-    - X_resampled (pd.DataFrame), y_resampled (np.ndarray): Datos balanceados
-    """
+    Perform random undersampling to balance the dataset.
 
+    This function reduces the number of samples in the majority class(es)
+    by randomly selecting samples until all classes have the same number 
+    of samples as the original minority class.
+
+    Args:
+        X_df (pd.DataFrame): DataFrame containing the features.
+        y_array (np.ndarray): NumPy array containing the target labels.
+        random_state (Optional[int], optional): Seed for the random number 
+            generator for reproducibility. Defaults to None.
+
+    Returns:
+        Tuple[pd.DataFrame, np.ndarray]: A tuple containing the resampled 
+            features DataFrame and the corresponding resampled target labels array.
+            The data is shuffled.
+    """
+    # Create a temporary DataFrame including the target for easier grouping
     temp_df = X_df.copy()
-    temp_df['__target__'] = y_array
-    
+    target_col_name = '__target__' # Use a temporary, unlikely column name
+    temp_df[target_col_name] = y_array
+
+    # Determine the number of samples in the smallest class
     _, counts = np.unique(y_array, return_counts=True)
     min_count = np.min(counts)
 
-    sampled = temp_df.groupby('__target__', group_keys=False)\
-                     .apply(lambda x: x.sample(min_count, random_state=random_state))
+    # Group by target, sample min_count from each group, and recombine
+    # Use reset_index() to handle potential MultiIndex after apply
+    sampled_df = temp_df.groupby(target_col_name, group_keys=False)\
+                        .apply(lambda x: x.sample(min_count, random_state=random_state))\
+                        .reset_index(drop=True)
 
-    X_res = sampled.drop('__target__', axis=1).sample(frac=1, random_state=random_state)
-    y_res = sampled['__target__'].values
-    
-    return X_res, y_res
+    # Shuffle the final dataset to avoid order by class
+    sampled_df = sampled_df.sample(frac=1, random_state=random_state).reset_index(drop=True)
 
-def oversample_duplicate(X_df, y_array, random_state=None):
+    # Separate features and target
+    X_resampled = sampled_df.drop(target_col_name, axis=1)
+    y_resampled = sampled_df[target_col_name].values
+
+    return X_resampled, y_resampled
+
+def duplicate_oversample(
+    X_df: pd.DataFrame, 
+    y_array: np.ndarray, 
+    random_state: Optional[int] = None
+) -> Tuple[pd.DataFrame, np.ndarray]:
     """
-    Oversampling mediante duplicación manteniendo X como DataFrame y y como array.
-    
-    Parámetros:
-    - X_df (pd.DataFrame): Características
-    - y_array (np.ndarray): Target
-    - random_state (int): Semilla aleatoria
-    
-    Retorna:
-    - X_resampled (pd.DataFrame), y_resampled (np.ndarray): Datos balanceados
+    Perform oversampling by duplicating samples from minority classes.
+
+    This function increases the number of samples in the minority class(es)
+    by randomly duplicating existing samples until all classes have the same 
+    number of samples as the original majority class.
+
+    Args:
+        X_df (pd.DataFrame): DataFrame containing the features.
+        y_array (np.ndarray): NumPy array containing the target labels.
+        random_state (Optional[int], optional): Seed for the random number 
+            generator for reproducibility. Defaults to None.
+
+    Returns:
+        Tuple[pd.DataFrame, np.ndarray]: A tuple containing the resampled 
+            features DataFrame and the corresponding resampled target labels array.
+            The data is shuffled.
     """
-    # Crear DataFrame temporal con el target
+    # Create a temporary DataFrame including the target
     temp_df = X_df.copy()
-    temp_df['__target__'] = y_array
-    
-    # Calcular el tamaño máximo de clase
-    max_count = pd.Series(y_array).value_counts().max()
-    
-    # Función de muestreo por grupo
-    def sample_group(group):
-        if len(group) < max_count:
-            n_needed = max_count - len(group)
-            additional = group.sample(n_needed, replace=True, random_state=random_state)
-            return pd.concat([group, additional])
-        return group
-    
-    # Aplicar muestreo
-    sampled = temp_df.groupby('__target__', group_keys=False)\
-                     .apply(sample_group)
-    
-    # Separar y reordenar
-    X_res = sampled.drop('__target__', axis=1).sample(frac=1, random_state=random_state)
-    y_res = sampled['__target__'].values
-    
-    return X_res, y_res
-def simple_smote(X_df, y_array, k=5, random_state=None):
+    target_col_name = '__target__'
+    temp_df[target_col_name] = y_array
+
+    # Determine the number of samples in the largest class
+    target_counts = pd.Series(y_array).value_counts()
+    max_count = target_counts.max()
+
+    resampled_dfs: List[pd.DataFrame] = []
+    # Iterate through each class label and its count
+    for class_label, count in target_counts.items():
+        class_df = temp_df[temp_df[target_col_name] == class_label]
+        # If the class count is less than the max count, oversample it
+        if count < max_count:
+            n_needed = max_count - count
+            # Sample with replacement to duplicate instances
+            additional_samples = class_df.sample(n=n_needed, replace=True, random_state=random_state)
+            # Combine original and duplicated samples for this class
+            resampled_dfs.append(pd.concat([class_df, additional_samples], axis=0))
+        else:
+            # If it's a majority class, just add its original samples
+            resampled_dfs.append(class_df)
+
+    # Combine all class DataFrames and shuffle the result
+    final_df = pd.concat(resampled_dfs, axis=0)\
+                   .sample(frac=1, random_state=random_state)\
+                   .reset_index(drop=True)
+
+    # Separate features and target
+    X_resampled = final_df.drop(target_col_name, axis=1)
+    y_resampled = final_df[target_col_name].values
+
+    return X_resampled, y_resampled
+
+
+def SMOTE(
+    X_df: pd.DataFrame, 
+    y_array: np.ndarray, 
+    k: int = 5, 
+    random_state: Optional[int] = None
+) -> Tuple[pd.DataFrame, np.ndarray]:
     """
-    Implementación simplificada de SMOTE para DataFrames.
-    
-    Parámetros:
-    - X_df (pd.DataFrame): Características (DataFrame)
-    - y_array (np.ndarray): Etiquetas (array 1D)
-    - k (int): Número de vecinos para SMOTE
-    - random_state (int): Semilla aleatoria
-    
-    Retorna:
-    - X_resampled (pd.DataFrame), y_resampled (np.ndarray): Datos balanceados
+    Perform SMOTE (Synthetic Minority Over-sampling TEchnique) using a 
+    vectorized approach.
+
+    This function generates synthetic samples for the minority class(es) based 
+    on their k-nearest neighbors until all classes have the same number of 
+    samples as the original majority class.
+
+    Args:
+        X_df (pd.DataFrame): DataFrame containing the features.
+        y_array (np.ndarray): NumPy array containing the target labels.
+        k (int, optional): Number of nearest neighbors to consider for 
+            generating synthetic samples. Defaults to 5.
+        random_state (Optional[int], optional): Seed for the random number 
+            generator for reproducibility. Defaults to None.
+
+    Returns:
+        Tuple[pd.DataFrame, np.ndarray]: A tuple containing the resampled 
+            (original + synthetic) features DataFrame and the corresponding 
+            target labels array. The data is shuffled.
+            
+    Notes:
+        - If a minority class has fewer than k+1 samples, k will be adjusted
+          downwards for that class to avoid errors.
+        - Assumes numerical features for distance calculations.
     """
     if random_state is not None:
         np.random.seed(random_state)
-    
-    # Convertir a numpy para cálculos
-    X_np = X_df.values
+
+    # Convert features DataFrame to NumPy array for efficient computation
+    X_np: np.ndarray = X_df.values
+    # Get unique classes and their counts
+    classes: np.ndarray
+    counts: np.ndarray
     classes, counts = np.unique(y_array, return_counts=True)
-    max_count = np.max(counts)
     
-    X_resampled = [X_np]
-    y_resampled = [y_array]
+    # Determine the target size (number of samples in the majority class)
+    max_count: int = np.max(counts)
     
-    for class_idx, count in zip(classes, counts):
-        if count < max_count:
-            # Obtener muestras de la clase actual
-            mask = y_array == class_idx
-            X_class = X_np[mask]
-            n_needed = max_count - count
+    # Lists to store original and synthetic data components
+    resampled_dfs: List[pd.DataFrame] = [X_df] # Start with original features
+    resampled_ys: List[np.ndarray] = [y_array] # Start with original labels
+
+    # Identify minority classes (those needing oversampling)
+    minority_classes_indices: np.ndarray = np.where(counts < max_count)[0]
+    minority_classes: np.ndarray = classes[minority_classes_indices]
+
+    # Iterate through each minority class to generate synthetic samples
+    for class_idx in minority_classes:
+        # Get samples belonging to the current minority class
+        minority_mask: np.ndarray = (y_array == class_idx)
+        X_class: np.ndarray = X_np[minority_mask]
+        current_count: int = X_class.shape[0]
+        n_needed: int = max_count - current_count
+
+        # Skip if no samples are needed for this class
+        if n_needed <= 0: 
+            continue
             
-            # Calcular matriz de distancias
-            distances = np.sqrt(((X_class[:, np.newaxis] - X_class)**2).sum(axis=2))
-            np.fill_diagonal(distances, np.inf)
-            
-            # Obtener índices de los k vecinos más cercanos
-            knn_indices = np.argpartition(distances, k, axis=1)[:, :k]
-            
-            synthetic_samples = []
-            for _ in range(n_needed):
-                # Seleccionar muestra base aleatoria
-                sample_idx = np.random.randint(X_class.shape[0])
-                neighbor_idx = np.random.choice(knn_indices[sample_idx])
-                
-                # Generar muestra sintética
-                alpha = np.random.random()
-                synthetic = X_class[sample_idx] + alpha * (X_class[neighbor_idx] - X_class[sample_idx])
-                
-                synthetic_samples.append(synthetic)
-            
-            # Convertir a DataFrame manteniendo nombres de columnas
-            synthetic_df = pd.DataFrame(
-                np.array(synthetic_samples),
-                columns=X_df.columns
-            )
-            
-            # Concatenar con datos originales
-            X_resampled.append(synthetic_df.values)
-            y_resampled.append(np.full(n_needed, class_idx))
+        # Adjust k if there are not enough neighbors
+        current_k: int = k
+        if current_count <= k:
+             # Adjust k to be the number of available neighbors (excluding self)
+             current_k = max(1, current_count - 1) 
+             print(f"Warning: Not enough samples ({current_count}) for k={k} "
+                   f"in class {class_idx}. Using k={current_k}.")
+        
+        # --- Efficient KNN Calculation ---
+        # Calculate pairwise Euclidean distances within the class samples
+        # Using broadcasting for efficiency: (n, 1, d) - (1, n, d) -> (n, n, d) -> sum(axis=-1) -> sqrt
+        distances: np.ndarray = np.sqrt(np.sum((X_class[:, np.newaxis, :] - X_class[np.newaxis, :, :])**2, axis=-1))
+        
+        # Find indices of the k nearest neighbors for each sample
+        # argsort returns indices that would sort the array; take indices 1 to k+1 to exclude self
+        knn_indices: np.ndarray = np.argsort(distances, axis=1)[:, 1:current_k+1]
+        # --- End KNN Calculation ---
+
+        # --- Vectorized Synthetic Sample Generation ---
+        # 1. Choose 'n_needed' random base samples from the minority class (with replacement)
+        base_sample_indices: np.ndarray = np.random.randint(0, current_count, size=n_needed)
+
+        # 2. Choose a random neighbor for each base sample from its k neighbors
+        #    Select a random column index from the knn_indices for each base sample
+        random_neighbor_selection: np.ndarray = np.random.randint(0, current_k, size=n_needed)
+        neighbor_indices: np.ndarray = knn_indices[base_sample_indices, random_neighbor_selection]
+
+        # 3. Generate 'n_needed' random interpolation factors (alphas) between 0 and 1
+        #    Reshape to (n_needed, 1) for broadcasting
+        alphas: np.ndarray = np.random.random(size=n_needed)[:, np.newaxis] 
+
+        # 4. Calculate synthetic samples: base + alpha * (neighbor - base)
+        base_samples: np.ndarray = X_class[base_sample_indices]
+        neighbor_samples: np.ndarray = X_class[neighbor_indices]
+        synthetic_samples_np: np.ndarray = base_samples + alphas * (neighbor_samples - base_samples)
+        # --- End Vectorized Generation ---
+
+        # Convert synthetic samples back to a DataFrame, preserving column names
+        synthetic_df = pd.DataFrame(synthetic_samples_np, columns=X_df.columns)
+
+        # Append synthetic data to the lists
+        resampled_dfs.append(synthetic_df)
+        # Append the corresponding labels for the synthetic samples
+        resampled_ys.append(np.full(n_needed, class_idx, dtype=y_array.dtype)) # Match original dtype
+
+    # Combine original and all synthetic data
+    X_combined: pd.DataFrame = pd.concat(resampled_dfs, axis=0, ignore_index=True)
+    y_combined: np.ndarray = np.concatenate(resampled_ys)
+
+    # Shuffle the combined dataset
+    final_indices: np.ndarray = np.random.permutation(len(X_combined))
     
-    # Combinar y mezclar todos los datos
-    X_combined = pd.DataFrame(
-        np.concatenate(X_resampled),
-        columns=X_df.columns
-    )
-    y_combined = np.concatenate(y_resampled)
-    
-    # Mezclar los datos
-    indices = np.random.permutation(len(X_combined))
-    return X_combined.iloc[indices].reset_index(drop=True), y_combined[indices]
+    # Use .iloc for shuffling DataFrames based on indices and reset index
+    X_resampled_final: pd.DataFrame = X_combined.iloc[final_indices].reset_index(drop=True)
+    y_resampled_final: np.ndarray = y_combined[final_indices]
+
+    return X_resampled_final, y_resampled_final
