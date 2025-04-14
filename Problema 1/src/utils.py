@@ -33,6 +33,32 @@ def PCA(df, n_components=2):
     
     return X_reduced_df, components_df
 
+
+
+print("\nVisualización de fronteras de decisión en espacio 2D")
+X_train_2d, components_2d = PCA(X_train, n_components=2)
+
+# LDA en 2D
+lda_2d = LDA()
+lda_2d.fit(X_train_2d, y_train)
+plot_decision_boundary(lda_2d, X_val_2d, y_val, title="Frontera de Decisión - LDA")
+
+# Regresión Logística en 2D
+mlr_2d = LogisticRegression(learning_rate=0.1, n_iter=1000)
+mlr_2d.fit(X_train_2d, y_train)
+plot_decision_boundary(mlr_2d, X_val_2d, y_val, title="Frontera de Decisión - Regresión Logística")
+
+importances = final_rf_model.feature_importances_
+top_two_idx = np.argsort(importances)[-2:]
+X_train_2d = X_train_array[:, top_two_idx]
+X_val_2d = X_val_array[:, top_two_idx]
+
+
+# Random Forest en 2D
+rf_2d = RandomForest(n_estimators=50, max_depth=5, criterion='entropy')
+rf_2d.fit(X_train_2d, y_train)
+plot_decision_boundary(rf_2d, X_val_2d, y_val, title="Frontera de Decisión - Random Forest")
+
 def KMeans(df, n_clusters=3, max_iter=100, random_state=None):
     """
     K-Means modificado para trabajar con DataFrames de pandas

@@ -490,7 +490,7 @@ def split_and_normalize( df: pd.DataFrame, target_column: str, exclude_cols: Opt
     X_train_norm, means, stds = normalize(X_train, exclude_cols=exclude_cols)
     X_val_norm, _, _ = normalize(X_val, means=means, stds=stds, exclude_cols=exclude_cols)
     
-    return X_train_norm, X_val_norm, y_train, y_val, means, stds
+    return X_train_norm, X_val_norm, y_train, y_val
 
 def create_stratified_k_folds(
     X: Union[pd.DataFrame, np.ndarray], # Accept DataFrame or ndarray for X

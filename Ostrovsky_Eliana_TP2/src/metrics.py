@@ -106,7 +106,7 @@ def precision_score(
     """
     y_true_arr = np.asarray(y_true)
     y_pred_arr = np.asarray(y_pred)
-    
+
     cm = confusion_matrix(y_true_arr, y_pred_arr, labels=labels)
     
     if labels is None:
@@ -479,8 +479,7 @@ def plot_confusion_matrix(
         fig = ax.figure 
 
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
-    fig.colorbar(im, ax=ax) 
-    
+
     tick_marks = np.arange(len(effective_display_labels))
     ax.set_xticks(tick_marks)
     ax.set_yticks(tick_marks)
@@ -599,26 +598,46 @@ def calculate_metrics(
         metrics_dict["classes"][name] = {
             "precision": p[i], "recall": r[i], "f1-score": f1[i], "support": support[i]
         }
-    if is_binary and y_proba is not None:
+
+    if y_proba is not None:
         y_proba_arr = np.asarray(y_proba)
-        
-        
-        if y_proba_arr.ndim == 2 and y_proba_arr.shape[1] >= 2:
-            try:
-                pos_idx = effective_labels.index(pos_label)
-                y_scores = y_proba_arr[:, pos_idx]
-            except ValueError:
-                y_scores = y_proba_arr[:, 1]
-        else:
-            y_scores = y_proba_arr
+
+        if is_binary:
             
-        y_true_binary = (y_true_arr == pos_label).astype(int)
-        
-        fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
-        metrics_dict["auc_roc"] = auc(fpr, tpr)
-        
-        precision_curve, recall_curve, _ = pr_curve(y_true_binary, y_scores)
-        metrics_dict["auc_pr"] = auc(recall_curve, precision_curve)
+            if y_proba_arr.ndim == 2 and y_proba_arr.shape[1] >= 2:
+                try:
+                    pos_idx = effective_labels.index(pos_label)
+                    y_scores = y_proba_arr[:, pos_idx]
+                except ValueError:
+                    y_scores = y_proba_arr[:, 1]
+            else:
+                y_scores = y_proba_arr
+                
+            y_true_binary = (y_true_arr == pos_label).astype(int)
+            
+            fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
+            metrics_dict["auc_roc"] = auc(fpr, tpr)
+            
+            precision_curve, recall_curve, _ = pr_curve(y_true_binary, y_scores)
+            metrics_dict["auc_pr"] = auc(recall_curve, precision_curve)
+        else:
+            roc_auc = 0.0
+            pr_auc = 0.0
+
+            for i, label in enumerate(effective_labels):
+                y_true_binary = (y_true_arr == label)
+                if np.sum(y_true_binary) == 0 or np.sum(y_true_binary) == len(y_true_arr): 
+                    continue 
+                
+                y_scores = y_proba_arr[:, i]
+                fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
+                roc_auc += auc(fpr, tpr)
+
+                precision, recall, _ = pr_curve(y_true_binary, y_scores)
+                pr_auc += auc(recall, precision) 
+
+            metrics_dict["auc_pr"] = pr_auc / len(effective_labels)
+            metrics_dict["auc_roc"] = roc_auc / len(effective_labels)
         
     return metrics_dict
 
@@ -736,7 +755,6 @@ def display_full_metrics(
             raise ValueError("Length of labels and target_names must match.")
 
     print_classification_report(y_true_arr, y_pred_arr, labels=effective_labels, target_names=effective_target_names)
-
     cm_title = f"Confusion Matrix {title_suffix}".strip()
     print(f"\n--- {cm_title} ---")
 
@@ -756,7 +774,6 @@ def display_full_metrics(
         is_binary = n_classes == 2
 
         if is_binary:
-            print(f"Binary case detected (Classes: {effective_target_names}). Positive label assumed: '{pos_label}'")
             y_scores: Optional[np.ndarray] = None
             if y_proba_arr.ndim == 2:
                 if y_proba_arr.shape[1] == n_classes:
@@ -797,14 +814,12 @@ def display_full_metrics(
                 axes_curves[1].legend(loc="lower left")
 
         else:
-            print("Multi-class case detected. Plotting One-vs-Rest (OvR) curves.")
             if y_proba_arr.ndim != 2 or y_proba_arr.shape[1] != n_classes:
                  print(f"Error: Expected y_proba shape (n_samples, {n_classes}), got {y_proba_arr.shape}. Cannot plot OvR curves.")
                  plt.close(fig_curves) 
                  return 
 
             axes_curves[0].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Chance')
-            print("AUC ROC (OvR):")
             for i, label in enumerate(effective_labels):
                 y_true_binary = (y_true_arr == label)
                 if np.sum(y_true_binary) == 0 or np.sum(y_true_binary) == len(y_true_arr): 
