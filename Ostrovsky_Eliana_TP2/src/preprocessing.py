@@ -50,35 +50,35 @@ def remove_negative_values(df: pd.DataFrame) -> pd.DataFrame:
     df_non_negative[numeric_cols] = df_numeric.where(df_numeric >= 0, np.nan)
     return df_non_negative
 
-# def remove_outliers_iqr(df: pd.DataFrame, underlimit: float = 0.15, uperlimit: float = 0.85) -> pd.DataFrame:
-#     """
-#     Removes outliers from numeric columns (excluding specified and binary-like)
-#     using the IQR method based on specified percentiles. Outliers are set to NaN.
+def remove_outliers_iqr(df: pd.DataFrame, underlimit: float = 0.15, uperlimit: float = 0.85) -> pd.DataFrame:
+    """
+    Removes outliers from numeric columns (excluding specified and binary-like)
+    using the IQR method based on specified percentiles. Outliers are set to NaN.
 
-#     Args:
-#         df (pd.DataFrame): The input DataFrame.
-#         underlimit (float): Lower percentile for IQR calculation. Defaults to 0.15.
-#         uperlimit (float): Upper percentile for IQR calculation. Defaults to 0.85.
+    Args:
+        df (pd.DataFrame): The input DataFrame.
+        underlimit (float): Lower percentile for IQR calculation. Defaults to 0.15.
+        uperlimit (float): Upper percentile for IQR calculation. Defaults to 0.85.
 
-#     Returns:
-#         pd.DataFrame: DataFrame with outliers set to NaN.
-#     """
-#     df_no_outliers = df.copy()
-#     numeric_cols = df_no_outliers.select_dtypes(include=np.number).columns.difference(['CellAdhesion', 'NuclearMembrane', 'OxygenSaturation', 'Vascularization', 'InflammationMarkers'])
-#     numeric_cols = [col for col in numeric_cols if not set(df_no_outliers[col].dropna().unique()).issubset({0, 1})]
+    Returns:
+        pd.DataFrame: DataFrame with outliers set to NaN.
+    """
+    df_no_outliers = df.copy()
+    numeric_cols = df_no_outliers.select_dtypes(include=np.number).columns.difference(['CellAdhesion', 'NuclearMembrane', 'OxygenSaturation', 'Vascularization', 'InflammationMarkers'])
+    numeric_cols = [col for col in numeric_cols if not set(df_no_outliers[col].dropna().unique()).issubset({0, 1})]
 
-#     q_lower = df_no_outliers[numeric_cols].quantile(underlimit)
-#     q_upper = df_no_outliers[numeric_cols].quantile(uperlimit)
-#     iqr = q_upper - q_lower
+    q_lower = df_no_outliers[numeric_cols].quantile(underlimit)
+    q_upper = df_no_outliers[numeric_cols].quantile(uperlimit)
+    iqr = q_upper - q_lower
 
-#     lower_bound = q_lower - 1.5 * iqr
-#     upper_bound = q_upper + 1.5 * iqr
+    lower_bound = q_lower - 1.5 * iqr
+    upper_bound = q_upper + 1.5 * iqr
 
-#     for column in numeric_cols:
-#         col_data = df_no_outliers[column]
-#         is_outlier = (col_data < lower_bound[column]) | (col_data > upper_bound[column])
-#         df_no_outliers[column] = col_data.where(~is_outlier, np.nan)
-#     return df_no_outliers
+    for column in numeric_cols:
+        col_data = df_no_outliers[column]
+        is_outlier = (col_data < lower_bound[column]) | (col_data > upper_bound[column])
+        df_no_outliers[column] = col_data.where(~is_outlier, np.nan)
+    return df_no_outliers
 
 def remove_outliers(df: pd.DataFrame, underlimit: float = 0.15, uperlimit: float = 0.85) -> pd.DataFrame:
     """
@@ -254,6 +254,7 @@ def handle_missing_values(df: pd.DataFrame, train_df: Optional[pd.DataFrame] = N
                     neighbor_values = train_df.loc[observed_ref_indices[nearest_neighbor_indices[i]], col_to_impute].values
                     imputed_value = np.nanmean(neighbor_values)
                     df_imputed.loc[missing_row_idx, col_to_impute] = imputed_value
+
             elif missing_data.shape[0] > 0:
                 fill_value = train_df[col_to_impute].mean()
                 if pd.isna(fill_value):
@@ -278,7 +279,7 @@ def clean_data(df: pd.DataFrame, underlimit: float = 0.15, uperlimit: float = 0.
     df_cleaned = df.copy()
     df_cleaned = apply_variable_limits(df_cleaned)
     df_cleaned = remove_negative_values(df_cleaned)
-    df_cleaned = remove_outliers(df_cleaned, underlimit, uperlimit)
+    df_cleaned = remove_outliers_iqr(df_cleaned, underlimit, uperlimit)
     df_cleaned = remove_high_nan_rows(df_cleaned, nan_threshold)
     return df_cleaned
 
@@ -492,12 +493,8 @@ def split_and_normalize( df: pd.DataFrame, target_column: str, exclude_cols: Opt
     
     return X_train_norm, X_val_norm, y_train, y_val
 
-def create_stratified_k_folds(
-    X: Union[pd.DataFrame, np.ndarray], # Accept DataFrame or ndarray for X
-    y: np.ndarray, 
-    k: int = 5, 
-    random_state: Optional[int] = None
-) -> List[Tuple[np.ndarray, np.ndarray]]:
+def create_stratified_k_folds(X: Union[pd.DataFrame, np.ndarray], y: np.ndarray, k: int = 5, random_state: Optional[int] = None
+                              ) -> List[Tuple[np.ndarray, np.ndarray]]:
     """
     Creates indices for K-Fold cross-validation with stratification.
 
@@ -530,47 +527,33 @@ def create_stratified_k_folds(
     n_samples = len(y_arr)
     indices = np.arange(n_samples)
     
-    # Get unique classes and their counts
     unique_labels, y_inversed = np.unique(y_arr, return_inverse=True)
     class_counts = np.bincount(y_inversed)
     
-    # Check if k is feasible given the smallest class size
     min_class_size = np.min(class_counts)
     if k > min_class_size:
         raise ValueError(f"Cannot create {k} folds with stratification. The smallest "
                          f"class has only {min_class_size} samples. Reduce k or handle "
                          f"small classes.")
 
-    # Initialize list to hold validation indices for each fold
-    # Stratify by distributing indices of each class across folds
     per_fold_indices: List[List[int]] = [[] for _ in range(k)]
     
     for class_label_idx, count in enumerate(class_counts):
-        # Get indices for the current class
         class_indices_original = indices[y_inversed == class_label_idx]
-        # Shuffle class indices
         np.random.shuffle(class_indices_original)
         
-        # Distribute shuffled indices cyclically among folds
         for i, idx in enumerate(class_indices_original):
             target_fold = i % k
             per_fold_indices[target_fold].append(idx)
 
-    # Create the final train/validation splits
     fold_splits: List[Tuple[np.ndarray, np.ndarray]] = []
     all_indices_set = set(indices)
     
     for i in range(k):
-        # Validation indices for fold i are those assigned above
         val_indices = np.array(per_fold_indices[i], dtype=int)
         
-        # Training indices are all indices NOT in the validation set for this fold
         val_indices_set = set(val_indices)
         train_indices = np.array(list(all_indices_set - val_indices_set), dtype=int)
-        
-        # Sort indices for potential caching benefits (optional)
-        # train_indices.sort()
-        # val_indices.sort()
         
         fold_splits.append((train_indices, val_indices))
 

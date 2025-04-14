@@ -37,7 +37,7 @@ def KMeans(df: pd.DataFrame, n_clusters: int = 3, max_iter: int = 100, random_st
         np.random.seed(random_state)
 
     X = df.values
-    n_samples, n_features = X.shape
+    n_samples, _ = X.shape
 
     initial_centroid_indices = np.random.choice(n_samples, n_clusters, replace=False)
     centroids = X[initial_centroid_indices]
@@ -284,14 +284,14 @@ class LogisticRegression:
             ValueError: If the model has not been fitted yet or classes are not defined.
         """
         if self.classes_ is None or self.mode_ is None:
-             raise ValueError("Model not fitted or mode/classes not defined.")
+            raise ValueError("Model not fitted or mode/classes not defined.")
              
         probabilities = self.predict_proba(X)
         
         if self.mode_ == 'binary':
-             predicted_indices = (probabilities[:, 1] >= threshold).astype(int)
+            predicted_indices = (probabilities[:, 1] >= threshold).astype(int)
         else:
-             predicted_indices = np.argmax(probabilities, axis=1)
+            predicted_indices = np.argmax(probabilities, axis=1)
              
         return self.classes_[predicted_indices]
 
@@ -528,12 +528,7 @@ class DecisionTree:
         entropy = -np.sum(probabilities * np.log2(probabilities + 1e-15)) 
         return float(entropy)
 
-    def _calculate_information_gain(
-        self, 
-        X_column: np.ndarray, 
-        y: np.ndarray, 
-        threshold: float
-    ) -> float:
+    def _calculate_information_gain( self, X_column: np.ndarray, y: np.ndarray, threshold: float) -> float:
         """Calculates the Information Gain for a potential split."""
         
         parent_entropy = self._calculate_entropy(y)
@@ -747,14 +742,8 @@ class RandomForest:
         feature_importances_ (Optional[np.ndarray]): Importance of each feature, averaged 
             over all trees in the forest. Computed after fit.
     """
-    def __init__(
-        self, 
-        n_estimators: int = 100, 
-        max_depth: Optional[int] = None, 
-        min_samples_split: int = 2, 
-        max_features: Optional[Union[int, float, str]] = None, 
-        random_state: Optional[int] = None
-    ):
+    def __init__( self, n_estimators: int = 100, max_depth: Optional[int] = None, min_samples_split: int = 2, 
+                 max_features: Optional[Union[int, float, str]] = None, random_state: Optional[int] = None):
         """
         Initializes the RandomForest classifier.
 

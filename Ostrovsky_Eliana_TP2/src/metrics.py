@@ -9,11 +9,8 @@ Numeric = Union[int, float]
 Labels = Optional[Sequence[Any]]
 TargetNames = Optional[List[str]]
 
-def confusion_matrix(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    labels: Labels = None
-) -> np.ndarray:
+def confusion_matrix( y_true: ArrayLike, y_pred: ArrayLike, labels: Labels = None
+                     ) -> np.ndarray:
     """ 
     Computes the confusion matrix to evaluate the accuracy of a classification.
 
@@ -72,13 +69,8 @@ def accuracy_score(y_true: ArrayLike, y_pred: ArrayLike) -> float:
         
     return float(np.mean(y_true_arr == y_pred_arr))
 
-def precision_score(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    labels: Labels = None, 
-    average: Optional[str] = 'binary', 
-    zero_division: Numeric = 0
-) -> Union[float, np.ndarray]:
+def precision_score( y_true: ArrayLike, y_pred: ArrayLike, labels: Labels = None, average: Optional[str] = 'binary', zero_division: Numeric = 0
+                    ) -> Union[float, np.ndarray]:
     """
     Computes the precision: tp / (tp + fp).
 
@@ -161,13 +153,8 @@ def precision_score(
         else:
             raise ValueError("average parameter must be 'binary', 'micro', 'macro', 'weighted', or None")
 
-def recall_score(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    labels: Labels = None, 
-    average: Optional[str] = 'binary', 
-    zero_division: Numeric = 0
-) -> Union[float, np.ndarray]:
+def recall_score( y_true: ArrayLike, y_pred: ArrayLike, labels: Labels = None, average: Optional[str] = 'binary', zero_division: Numeric = 0
+                 ) -> Union[float, np.ndarray]:
     """
     Computes the recall: tp / (tp + fn).
 
@@ -240,13 +227,8 @@ def recall_score(
         else:
             raise ValueError("average parameter must be 'binary', 'micro', 'macro', 'weighted', or None")
 
-def f1_score(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    labels: Labels = None, 
-    average: Optional[str] = 'binary', 
-    zero_division: Numeric = 0
-) -> Union[float, np.ndarray]:
+def f1_score( y_true: ArrayLike, y_pred: ArrayLike, labels: Labels = None, average: Optional[str] = 'binary', zero_division: Numeric = 0
+             ) -> Union[float, np.ndarray]:
     """
     Computes the F1 score: 2 * (precision * recall) / (precision + recall).
 
@@ -264,7 +246,6 @@ def f1_score(
     Returns:
         Union[float, np.ndarray]: F1 score or array of F1 scores, depending on `average`.
     """
-    # Calculate precision and recall based on the same averaging method
     precision = precision_score(y_true, y_pred, labels=labels, average=average, zero_division=zero_division)
     recall = recall_score(y_true, y_pred, labels=labels, average=average, zero_division=zero_division)
 
@@ -427,15 +408,8 @@ def auc(x: np.ndarray, y: np.ndarray) -> float:
         return 0.0
 
 
-def plot_confusion_matrix(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    labels: Labels = None, 
-    display_labels: TargetNames = None, 
-    title: str = 'Confusion Matrix', 
-    cmap: Any = plt.cm.Blues, 
-    ax: Optional[plt.Axes] = None 
-) -> plt.Axes:
+def plot_confusion_matrix( y_true: ArrayLike, y_pred: ArrayLike, labels: Labels = None, display_labels: TargetNames = None, 
+                          title: str = 'Confusion Matrix', cmap: Any = plt.cm.Blues, ax: Optional[plt.Axes] = None ) -> plt.Axes:
     """
     Plots the confusion matrix.
 
@@ -502,15 +476,8 @@ def plot_confusion_matrix(
     
     return ax
 
-def calculate_metrics(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    y_proba: Optional[np.ndarray] = None,  
-    labels: Labels = None, 
-    target_names: TargetNames = None, 
-    zero_division: Numeric = 0,
-    pos_label: Any = 1
-) -> Dict[str, Any]:
+def calculate_metrics( y_true: ArrayLike, y_pred: ArrayLike, y_proba: Optional[np.ndarray] = None,  labels: Labels = None, 
+                      target_names: TargetNames = None, zero_division: Numeric = 0, pos_label: Any = 1 ) -> Dict[str, Any]:
     """
     Calculates main classification metrics and returns them in a structured dictionary.
     For binary classification, includes additional metrics like AUC-ROC and AUC-PR when y_proba is provided.
@@ -642,13 +609,8 @@ def calculate_metrics(
     return metrics_dict
 
 
-def print_classification_report(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    labels: Labels = None, 
-    target_names: TargetNames = None, 
-    zero_division: Numeric = 0
-) -> None:
+def print_classification_report( y_true: ArrayLike, y_pred: ArrayLike, labels: Labels = None, 
+                                target_names: TargetNames = None, zero_division: Numeric = 0) -> None:
     """
     Calculates and prints a text summary of the main classification metrics.
 
@@ -691,7 +653,7 @@ def print_classification_report(
     report_str += '\n' 
     
     acc_fmt = '{:>{width}s} ' + ' {:>9s}' * 2 + ' {:>9.2f} {:>9d}\n'
-    total_support_int = int(metrics["macro avg"]["support"]) # Get total support once
+    total_support_int = int(metrics["macro avg"]["support"])
     report_str += acc_fmt.format('accuracy', '', '', metrics["accuracy"], total_support_int, width=width)
     
     avg_fmt = '{:>{width}s} ' + ' {:>9.2f}' * 3 + ' {:>9d}\n'
@@ -705,20 +667,13 @@ def print_classification_report(
                                  weighted_metrics["precision"], weighted_metrics["recall"], 
                                  weighted_metrics["f1-score"], total_support_int, width=width)
     
-    report_str += "=" * (width + 1 + 9 * len(headers) + len(headers)) + "\n" # Footer line
+    report_str += "=" * (width + 1 + 9 * len(headers) + len(headers)) + "\n"
 
     print(report_str)
 
 
-def display_full_metrics(
-    y_true: ArrayLike, 
-    y_pred: ArrayLike, 
-    y_proba: Optional[np.ndarray] = None, 
-    labels: Labels = None, 
-    target_names: TargetNames = None, 
-    pos_label: Any = 1,
-    title_suffix: str = ""
-) -> None:
+def display_full_metrics( y_true: ArrayLike, y_pred: ArrayLike, y_proba: Optional[np.ndarray] = None, labels: Labels = None, 
+                         target_names: TargetNames = None, pos_label: Any = 1, title_suffix: str = "" ) -> None:
     """
     Displays a comprehensive summary of classification performance metrics.
 

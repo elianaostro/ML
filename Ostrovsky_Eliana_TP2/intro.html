@@ -1,11 +1,215 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="es">
 <head>
-    <title>Descripción Trabajo Práctico 2</title>
-    <meta charset="utf-8">
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TP2: Clasificación y Ensemble Learning</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        h1 {
+            text-align: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            margin-bottom: 30px;
+        }
+        h2 {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .problem-container {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .metrics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .metrics-table th, .metrics-table td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .metrics-table th {
+            background-color: #3498db;
+            color: white;
+        }
+        .metrics-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+        .highlight {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .center-image {
+            display: block;
+            margin: 20px auto;
+            max-width: 80%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        code {
+            background-color: #f8f8f8;
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
 </head>
 <body>
+    <h1>Trabajo Práctico 2: Clasificación y Ensemble Learning</h1>
+    
+    <div class="problem-container">
+        <h2>Problema 1: Diagnóstico de Cáncer de Mama</h2>
+        
+        <p>
+            Este problema se centra en el <strong>diagnóstico de cáncer de mama</strong> a partir de 
+            características extraídas de imágenes histopatológicas de biopsias. El objetivo es 
+            desarrollar un modelo que pueda clasificar tumores en benignos (0) o malignos (1).
+        </p>
+        
+        <h3>Características principales:</h3>
+        <ul>
+            <li><strong>Implementación:</strong> Regresión logística binaria con regularización L2</li>
+            <li><strong>Exploración:</strong> Análisis de datos, visualización y tratamiento de valores atípicos</li>
+            <li><strong>Técnicas de rebalanceo:</strong> Undersampling, Oversampling, SMOTE y Cost-reweighting</li>
+        </ul>
+        
+        <h3>Resultados en datos balanceados:</h3>
+        <table class="metrics-table">
+            <tr>
+                <th>Métrica</th>
+                <th>Valor (Test)</th>
+            </tr>
+            <tr>
+                <td>Accuracy</td>
+                <td>0.85</td>
+            </tr>
+            <tr>
+                <td>Precision</td>
+                <td>0.85</td>
+            </tr>
+            <tr>
+                <td>Recall</td>
+                <td>0.82</td>
+            </tr>
+            <tr>
+                <td>F1-Score</td>
+                <td>0.83</td>
+            </tr>
+        </table>
+        
+        <h3>Comparación de técnicas de rebalanceo (datos desbalanceados):</h3>
+        <table class="metrics-table">
+            <tr>
+                <th>Técnica</th>
+                <th>Accuracy</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F-Score</th>
+                <th>AUC-ROC</th>
+                <th>AUC-PR</th>
+            </tr>
+            <tr>
+                <td>Sin rebalanceo</td>
+                <td>0.9156</td>
+                <td>0.7857</td>
+                <td>0.9167</td>
+                <td>0.8462</td>
+                <td>0.9650</td>
+                <td>0.8754</td>
+            </tr>
+            <tr>
+                <td>Undersampling</td>
+                <td>0.9156</td>
+                <td>0.7500</td>
+                <td>1.0000</td>
+                <td>0.8571</td>
+                <td>0.9664</td>
+                <td>0.8807</td>
+            </tr>
+            <tr>
+                <td>Oversampling duplicate</td>
+                <td>0.9241</td>
+                <td>0.7692</td>
+                <td>1.0000</td>
+                <td>0.8696</td>
+                <td>0.9651</td>
+                <td>0.8741</td>
+            </tr>
+            <tr>
+                <td>Oversampling SMOTE</td>
+                <td>0.9241</td>
+                <td>0.7692</td>
+                <td>1.0000</td>
+                <td>0.8696</td>
+                <td>0.9647</td>
+                <td>0.8778</td>
+            </tr>
+            <tr>
+                <td>Cost re-weighting</td>
+                <td>0.9114</td>
+                <td>0.7407</td>
+                <td>1.0000</td>
+                <td>0.8511</td>
+                <td>0.9639</td>
+                <td>0.8735</td>
+            </tr>
+        </table>
+    </div>
 
+    <div class="problem-container">
+        <h2>Problema 2: Predicción de Rendimiento de Jugadores de Basketball</h2>
+        
+        <p>
+            Este problema se enfoca en predecir el rendimiento de jugadores de basketball en base 
+            a sus estadísticas individuales. El objetivo es clasificar a los jugadores en tres categorías 
+            según su impacto en el juego: Negative WAR (1), Null WAR (2) o Positive WAR (3).
+        </p>
+        
+        <h3>Modelos implementados:</h3>
+        <ul>
+            <li><strong>Análisis Discriminante Lineal (LDA):</strong> Basado en la asunción de distribución gaussiana con matriz de covarianza compartida</li>
+            <li><strong>Regresión Logística Multi-clase:</strong> Implementación de regresión softmax con regularización L2</li>
+            <li><strong>Random Forest:</strong> Ensemble de árboles de decisión con criterio de entropía para las divisiones</li>
+        </ul>
+        
+        <p>
+            Cada algoritmo fue implementado desde cero utilizando NumPy, sin recurrir a bibliotecas 
+            de machine learning. Para más detalles sobre la implementación y resultados, consulta 
+            el notebook correspondiente y el informe.
+        </p>
+    </div>
+
+    <h2>Características del proyecto</h2>
+    <ul>
+        <li><strong>Implementaciones propias:</strong> Todos los algoritmos fueron implementados desde cero sin usar scikit-learn</li>
+        <li><strong>Evaluación completa:</strong> Cálculo de múltiples métricas y visualizaciones para analizar el rendimiento</li>
+        <li><strong>Código modularizado:</strong> Organización en archivos .py para mejorar la reutilización y mantenibilidad</li>
+        <li><strong>Documentación detallada:</strong> Comentarios y documentación en formato docstring para todas las funciones</li>
+    </ul>
+
+    <div class="footer">
+        <p>Eliana Ostrovsky - I302 Aprendizaje Automático y Aprendizaje Profundo - 1° Semestre 2025</p>
+    </div>
 </body>
 </html>
