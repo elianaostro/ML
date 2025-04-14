@@ -1,26 +1,20 @@
-# src/metrics.py
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
 from typing import List, Dict, Optional, Union, Tuple, Any, Sequence 
 
-# Type Definitions for clarity
-ArrayLike = Union[List[Any], np.ndarray, pd.Series] # Allow various array inputs
+ArrayLike = Union[List[Any], np.ndarray, pd.Series]
 Numeric = Union[int, float]
-Labels = Optional[Sequence[Any]] # Can be list, tuple, ndarray of labels
+Labels = Optional[Sequence[Any]]
 TargetNames = Optional[List[str]]
-
-# --------------------------------------------------------------------------
-# Base Metric Calculation Functions
-# --------------------------------------------------------------------------
 
 def confusion_matrix(
     y_true: ArrayLike, 
     y_pred: ArrayLike, 
     labels: Labels = None
 ) -> np.ndarray:
-    """
+    """ 
     Computes the confusion matrix to evaluate the accuracy of a classification.
 
     Args:
@@ -40,26 +34,19 @@ def confusion_matrix(
     y_pred_arr = np.asarray(y_pred)
 
     if labels is None:
-        # Use sorted unique labels found in both y_true and y_pred
         present_labels = np.unique(np.concatenate((y_true_arr, y_pred_arr)))
         labels_list = sorted(list(present_labels))
     else:
-        # Use provided labels, ensure it's a list/tuple
         labels_list = list(labels)
         
     n_labels = len(labels_list)
-    # Create a mapping from label value to matrix index
     label_to_ind = {label: i for i, label in enumerate(labels_list)}
-    
-    # Initialize confusion matrix with zeros
     cm = np.zeros((n_labels, n_labels), dtype=int)
     
-    # Iterate through true and predicted labels to populate the matrix
     for true, pred in zip(y_true_arr, y_pred_arr):
         true_label_ind = label_to_ind.get(true)
         pred_label_ind = label_to_ind.get(pred)
         
-        # Increment count only if both labels are in the specified 'labels_list'
         if true_label_ind is not None and pred_label_ind is not None:
             cm[true_label_ind, pred_label_ind] += 1
             
@@ -80,7 +67,6 @@ def accuracy_score(y_true: ArrayLike, y_pred: ArrayLike) -> float:
     """
     y_true_arr = np.asarray(y_true)
     y_pred_arr = np.asarray(y_pred)
-    # Ensure arrays have compatible shapes or handle appropriately
     if y_true_arr.shape != y_pred_arr.shape:
         raise ValueError("Input arrays y_true and y_pred must have the same shape.")
         
@@ -123,7 +109,6 @@ def precision_score(
     
     cm = confusion_matrix(y_true_arr, y_pred_arr, labels=labels)
     
-    # Determine labels if not provided
     if labels is None:
         effective_labels = sorted(list(np.unique(np.concatenate((y_true_arr, y_pred_arr)))))
     else:
@@ -131,20 +116,18 @@ def precision_score(
 
     n_labels = len(effective_labels)
     tp = np.diag(cm)
-    fp = cm.sum(axis=0) - tp # Sum columns (predicted) - TP = FP
-    support = cm.sum(axis=1) # Sum rows (true) = Support
+    fp = cm.sum(axis=0) - tp
+    support = cm.sum(axis=1)
 
     if average == 'binary':
-        pos_label_idx = 1 # Default assumption for binary
+        pos_label_idx = 1
         if n_labels != 2:
-             # Try to find label '1' or use the second label as the positive class
              try: 
                   pos_label_idx = effective_labels.index(1) 
              except ValueError: 
-                  pos_label_idx = 1 if n_labels > 1 else 0 # Fallback to second or first if no '1'
-             # print(f"Warning: average='binary' used on multi-class data. Reporting for class '{effective_labels[pos_label_idx]}'.")
+                  pos_label_idx = 1 if n_labels > 1 else 0
         
-        if pos_label_idx >= n_labels: return float(zero_division) # Safety check
+        if pos_label_idx >= n_labels: return float(zero_division)
              
         tp_binary = tp[pos_label_idx]
         fp_binary = fp[pos_label_idx]
@@ -159,13 +142,12 @@ def precision_score(
         precision = tp_total / denominator if denominator > 0 else float(zero_division)
         return float(precision)
         
-    else: # macro, weighted, None
+    else:
         precision_per_class = np.zeros(n_labels, dtype=float)
         denominators = tp + fp
         valid_mask = denominators > 0
-        # Calculate precision only where denominator is valid
         precision_per_class[valid_mask] = tp[valid_mask] / denominators[valid_mask]
-        precision_per_class[~valid_mask] = float(zero_division) # Assign zero_division where invalid
+        precision_per_class[~valid_mask] = float(zero_division)
             
         if average is None or average == 'none':
             return precision_per_class
@@ -215,15 +197,14 @@ def recall_score(
 
     n_labels = len(effective_labels)
     tp = np.diag(cm)
-    fn = cm.sum(axis=1) - tp # Sum rows (true) - TP = FN
-    support = cm.sum(axis=1) # Same as tp + fn
+    fn = cm.sum(axis=1) - tp
+    support = cm.sum(axis=1)
 
     if average == 'binary':
         pos_label_idx = 1
         if n_labels != 2:
              try: pos_label_idx = effective_labels.index(1)
              except ValueError: pos_label_idx = 1 if n_labels > 1 else 0
-             # print(f"Warning: average='binary' used on multi-class data. Reporting for class '{effective_labels[pos_label_idx]}'.")
         
         if pos_label_idx >= n_labels: return float(zero_division)
              
@@ -234,16 +215,15 @@ def recall_score(
         return float(recall)
         
     elif average == 'micro':
-        # Note: Micro-recall == Micro-precision == Accuracy
         tp_total = np.sum(tp)
         fn_total = np.sum(fn) 
         denominator = tp_total + fn_total
         recall = tp_total / denominator if denominator > 0 else float(zero_division)
         return float(recall) 
         
-    else: # macro, weighted, None
+    else:
         recall_per_class = np.zeros(n_labels, dtype=float)
-        denominators = support # Denominator for recall is the support (tp + fn)
+        denominators = support
         valid_mask = denominators > 0
         recall_per_class[valid_mask] = tp[valid_mask] / denominators[valid_mask]
         recall_per_class[~valid_mask] = float(zero_division)
@@ -288,19 +268,17 @@ def f1_score(
     precision = precision_score(y_true, y_pred, labels=labels, average=average, zero_division=zero_division)
     recall = recall_score(y_true, y_pred, labels=labels, average=average, zero_division=zero_division)
 
-    # Calculate F1 score
-    if isinstance(precision, np.ndarray): # average=None case
+    if isinstance(precision, np.ndarray):
         f1 = np.zeros_like(precision, dtype=float)
         denominator = precision + recall
         valid_mask = denominator > 0
         f1[valid_mask] = (2 * precision[valid_mask] * recall[valid_mask]) / denominator[valid_mask]
         f1[~valid_mask] = float(zero_division)
         return f1
-    else: # scalar case ('binary', 'micro', 'macro', 'weighted')
+    else:
         denominator = precision + recall
         f1 = (2 * precision * recall) / denominator if denominator > 0 else float(zero_division)
         return float(f1)
-
 
 def roc_curve(y_true: ArrayLike, y_proba: ArrayLike) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -325,7 +303,6 @@ def roc_curve(y_true: ArrayLike, y_proba: ArrayLike) -> Tuple[np.ndarray, np.nda
     y_true_arr = np.asarray(y_true)
     y_proba_arr = np.asarray(y_proba)
 
-    # Extract scores for the positive class (assumed to be 1 or the second column)
     if y_proba_arr.ndim == 2:
         if y_proba_arr.shape[1] < 2:
              raise ValueError("y_proba has 2 dimensions but fewer than 2 columns.")
@@ -335,37 +312,27 @@ def roc_curve(y_true: ArrayLike, y_proba: ArrayLike) -> Tuple[np.ndarray, np.nda
     else:
          raise ValueError("y_proba must be 1D or 2D.")
          
-    # Assume positive class label is 1 for calculation consistency
     pos_label_val = 1
 
-    # Sort scores and corresponding true labels
     desc_score_indices = np.argsort(y_scores, kind="mergesort")[::-1]
     y_scores_sorted = y_scores[desc_score_indices]
     y_true_sorted = y_true_arr[desc_score_indices]
 
-    # Identify distinct thresholds and corresponding indices
     distinct_value_indices = np.where(np.diff(y_scores_sorted))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true_sorted.size - 1]
     thresholds = y_scores_sorted[threshold_idxs]
 
-    # Calculate cumulative true positives and false positives at each threshold index
     tps = np.cumsum(y_true_sorted == pos_label_val)[threshold_idxs]
-    # fps = np.cumsum(y_true_sorted != pos_label_val)[threshold_idxs] # Alternative way
-    fps = 1 + threshold_idxs - tps # Num predicted positive - true positives = false positives
+    fps = 1 + threshold_idxs - tps 
 
-    # Calculate total number of actual positives and negatives
     n_positives = np.sum(y_true_arr == pos_label_val)
     n_negatives = y_true_arr.size - n_positives
 
-    # Calculate True Positive Rate (TPR) and False Positive Rate (FPR)
-    # Handle division by zero if no positives or no negatives exist
     tpr = tps / n_positives if n_positives > 0 else np.zeros_like(tps, dtype=float)
     fpr = fps / n_negatives if n_negatives > 0 else np.zeros_like(fps, dtype=float)
 
-    # Prepend (0, 0) point to ROC curve and adjust thresholds
     fpr = np.r_[0, fpr]
     tpr = np.r_[0, tpr]
-    # Add threshold slightly above max score to correspond to (0,0) point
     eps = np.finfo(thresholds.dtype).eps if len(thresholds) > 0 else 1e-6
     thresholds = np.r_[thresholds[0] + eps , thresholds]
 
@@ -390,7 +357,6 @@ def pr_curve(y_true: ArrayLike, y_proba: ArrayLike) -> Tuple[np.ndarray, np.ndar
     y_true_arr = np.asarray(y_true)
     y_proba_arr = np.asarray(y_proba)
     
-    # Extract scores for the positive class
     if y_proba_arr.ndim == 2:
         if y_proba_arr.shape[1] < 2: raise ValueError("y_proba has 2 dimensions but fewer than 2 columns.")
         y_scores = y_proba_arr[:, 1]
@@ -400,43 +366,27 @@ def pr_curve(y_true: ArrayLike, y_proba: ArrayLike) -> Tuple[np.ndarray, np.ndar
 
     pos_label_val = 1
 
-    # Sort scores and corresponding true labels
     desc_score_indices = np.argsort(y_scores, kind="mergesort")[::-1]
     y_scores_sorted = y_scores[desc_score_indices]
     y_true_sorted = y_true_arr[desc_score_indices]
 
-    # Find distinct thresholds
     distinct_value_indices = np.where(np.diff(y_scores_sorted))[0]
     threshold_idxs = np.r_[distinct_value_indices, y_true_sorted.size - 1]
     thresholds = y_scores_sorted[threshold_idxs]
     
-    # Calculate cumulative true positives and predicted positives
     tps = np.cumsum(y_true_sorted == pos_label_val)[threshold_idxs]
-    pred_positives = 1 + threshold_idxs # Total number predicted as positive at each threshold
+    pred_positives = 1 + threshold_idxs 
 
-    # Calculate total number of actual positives
     n_positives = np.sum(y_true_arr == pos_label_val)
 
-    # Calculate precision and recall
-    # Handle division by zero
     precision = tps / pred_positives if n_positives > 0 else np.zeros_like(tps, dtype=float)
     recall = tps / n_positives if n_positives > 0 else np.zeros_like(tps, dtype=float)
     
-    # Add starting point (recall=0, precision=1 is common convention) and adjust thresholds
-    # Scikit-learn adds precision=1, recall=0 at the end. Let's mimic this for consistency.
-    # We prepend points corresponding to the highest threshold first.
-    # Let's add the standard point (precision=1, recall=0) at the end.
-    
-    # Add threshold slightly above max score
     eps = np.finfo(thresholds.dtype).eps if len(thresholds) > 0 else 1e-6
     thresholds = np.r_[thresholds[0] + eps, thresholds] 
     
-    # Add recall=0, precision=? point at the start
-    precision = np.r_[precision[0], precision] # Precision at recall=0 is tricky, use first calculated value?
+    precision = np.r_[precision[0], precision] 
     recall = np.r_[0, recall] 
-    
-    # Ensure (precision=1, recall=0) is added if not naturally present? Scikit-learn seems to adjust.
-    # For simplicity, let's ensure the arrays start with recall=0.
 
     return precision, recall, thresholds
 
@@ -456,22 +406,19 @@ def auc(x: np.ndarray, y: np.ndarray) -> float:
     y = np.asarray(y)
     
     if x.size < 2 or y.size < 2 or x.size != y.size:
-        return 0.0 # Not enough points to compute area
-
+        return 0.0 
+    
     try:
-        # Ensure x is sorted for trapezoidal rule
         sorted_indices = np.argsort(x)
         x_sorted = x[sorted_indices]
         y_sorted = y[sorted_indices]
         
-        # Remove duplicates in x to avoid issues with np.trapz if any
         unique_x, unique_indices = np.unique(x_sorted, return_index=True)
         unique_y = y_sorted[unique_indices]
 
         if len(unique_x) < 2:
-            return 0.0 # Still not enough unique points
+            return 0.0 
 
-        # Calculate area using the trapezoidal rule
         area = np.trapz(unique_y, unique_x)
         return float(area)
         
@@ -479,9 +426,6 @@ def auc(x: np.ndarray, y: np.ndarray) -> float:
         print(f"Error calculating AUC: {e}")
         return 0.0
 
-# --------------------------------------------------------------------------
-# Plotting Function
-# --------------------------------------------------------------------------
 
 def plot_confusion_matrix(
     y_true: ArrayLike, 
@@ -489,8 +433,8 @@ def plot_confusion_matrix(
     labels: Labels = None, 
     display_labels: TargetNames = None, 
     title: str = 'Confusion Matrix', 
-    cmap: Any = plt.cm.Blues, # Colormap
-    ax: Optional[plt.Axes] = None # Allow plotting on existing axes
+    cmap: Any = plt.cm.Blues, 
+    ax: Optional[plt.Axes] = None 
 ) -> plt.Axes:
     """
     Plots the confusion matrix.
@@ -510,17 +454,15 @@ def plot_confusion_matrix(
     Returns:
         plt.Axes: The axes object with the confusion matrix plotted.
     """
-    # Ensure input arrays
+
     y_true_arr = np.asarray(y_true)
     y_pred_arr = np.asarray(y_pred)
 
-    # Determine labels if not provided
     if labels is None:
         effective_labels = sorted(list(np.unique(np.concatenate((y_true_arr, y_pred_arr)))))
     else:
         effective_labels = list(labels)
         
-    # Determine display labels
     if display_labels is None:
         effective_display_labels = [str(l) for l in effective_labels]
     else:
@@ -531,18 +473,14 @@ def plot_confusion_matrix(
 
     cm = confusion_matrix(y_true_arr, y_pred_arr, labels=effective_labels)
     
-    # Create figure/axes if not provided
     if ax is None:
         fig, ax = plt.subplots()
     else:
-        fig = ax.figure # Get figure from axes
+        fig = ax.figure 
 
-    # Display the matrix
     im = ax.imshow(cm, interpolation='nearest', cmap=cmap)
-    # Add colorbar correctly associated with the figure and axes
     fig.colorbar(im, ax=ax) 
     
-    # Set ticks and labels
     tick_marks = np.arange(len(effective_display_labels))
     ax.set_xticks(tick_marks)
     ax.set_yticks(tick_marks)
@@ -553,11 +491,9 @@ def plot_confusion_matrix(
     ax.set_ylabel('True label')
     ax.set_xlabel('Predicted label')
     
-    # Rotate x-axis labels for better readability
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
-    # Loop over data dimensions and create text annotations.
-    fmt = 'd' # Format as integer
+    fmt = 'd' 
     thresh = cm.max() / 2.
     for i in range(cm.shape[0]):
         for j in range(cm.shape[1]):
@@ -565,48 +501,16 @@ def plot_confusion_matrix(
                     ha="center", va="center",
                     color="white" if cm[i, j] > thresh else "black")
     
-    # Avoid fig.tight_layout() when using external ax, let the caller handle layout
-    # fig.tight_layout() 
     return ax
-
-
-# --------------------------------------------------------------------------
-# Refactored High-Level Functions
-# --------------------------------------------------------------------------
-
-def format_metrics_for_plot(metrics_dict: Dict[str, Any]) -> List[Tuple[str, float]]:
-    """
-    Formats a metrics dictionary into a list of tuples suitable for plotting.
-    
-    Args:
-        metrics_dict (Dict[str, Any]): Dictionary containing calculated metrics
-        
-    Returns:
-        List[Tuple[str, float]]: List of (metric_name, metric_value) pairs
-    """
-    metrics_to_plot = [
-        ('Accuracy', metrics_dict.get('accuracy', 0)),
-        ('Precision', metrics_dict.get('precision', 0)),
-        ('Recall', metrics_dict.get('recall', 0)),
-        ('F1-Score', metrics_dict.get('f1_score', 0))
-    ]
-    
-    # Add AUC metrics if they exist
-    if 'auc_roc' in metrics_dict:
-        metrics_to_plot.append(('AUC-ROC', metrics_dict['auc_roc']))
-    if 'auc_pr' in metrics_dict:
-        metrics_to_plot.append(('AUC-PR', metrics_dict['auc_pr']))
-        
-    return metrics_to_plot
 
 def calculate_metrics(
     y_true: ArrayLike, 
     y_pred: ArrayLike, 
-    y_proba: Optional[np.ndarray] = None,  # Added probability scores parameter
+    y_proba: Optional[np.ndarray] = None,  
     labels: Labels = None, 
     target_names: TargetNames = None, 
     zero_division: Numeric = 0,
-    pos_label: Any = 1  # Added positive label parameter
+    pos_label: Any = 1
 ) -> Dict[str, Any]:
     """
     Calculates main classification metrics and returns them in a structured dictionary.
@@ -636,7 +540,6 @@ def calculate_metrics(
     y_true_arr = np.asarray(y_true)
     y_pred_arr = np.asarray(y_pred)
     
-    # Determine effective labels and names
     if labels is None:
         effective_labels = sorted(list(np.unique(np.concatenate((y_true_arr, y_pred_arr)))))
     else:
@@ -651,12 +554,10 @@ def calculate_metrics(
              
     is_binary = len(effective_labels) == 2
 
-    # Calculate per-class metrics
     p = precision_score(y_true_arr, y_pred_arr, labels=effective_labels, average=None, zero_division=zero_division)
     r = recall_score(y_true_arr, y_pred_arr, labels=effective_labels, average=None, zero_division=zero_division)
     f1 = f1_score(y_true_arr, y_pred_arr, labels=effective_labels, average=None, zero_division=zero_division)
     
-    # Calculate binary averages
     if is_binary:
         precision = precision_score(y_true_arr, y_pred_arr, average='binary', zero_division=zero_division)
         recall = recall_score(y_true_arr, y_pred_arr, average='binary', zero_division=zero_division)
@@ -666,15 +567,12 @@ def calculate_metrics(
         recall = recall_score(y_true_arr, y_pred_arr, average='weighted', zero_division=zero_division)
         f1_value = f1_score(y_true_arr, y_pred_arr, average='weighted', zero_division=zero_division)
     
-    # Calculate support
     true_counts = Counter(y_true_arr)
     support = np.array([true_counts.get(l, 0) for l in effective_labels])
 
-    # Calculate aggregated metrics
     accuracy = accuracy_score(y_true_arr, y_pred_arr)
     total_support = np.sum(support)
     
-    # Use np.average, checking for zero total support for weighted avg
     macro_p = np.average(p)
     macro_r = np.average(r)
     macro_f1 = np.average(f1)
@@ -697,36 +595,28 @@ def calculate_metrics(
         }
     }
     
-    # Populate per-class metrics
     for i, name in enumerate(effective_target_names):
         metrics_dict["classes"][name] = {
             "precision": p[i], "recall": r[i], "f1-score": f1[i], "support": support[i]
         }
-    # Calculate AUC metrics for binary classification if probabilities are provided
     if is_binary and y_proba is not None:
         y_proba_arr = np.asarray(y_proba)
         
-        # Extract probability for positive class
+        
         if y_proba_arr.ndim == 2 and y_proba_arr.shape[1] >= 2:
-            # Find the index of the positive label
             try:
                 pos_idx = effective_labels.index(pos_label)
                 y_scores = y_proba_arr[:, pos_idx]
             except ValueError:
-                # Fallback to second column if pos_label not found
                 y_scores = y_proba_arr[:, 1]
         else:
-            # Assume 1D array contains scores for positive class
             y_scores = y_proba_arr
             
-        # Convert to binary format for ROC/PR calculations
         y_true_binary = (y_true_arr == pos_label).astype(int)
         
-        # Calculate ROC curve and AUC
         fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
         metrics_dict["auc_roc"] = auc(fpr, tpr)
         
-        # Calculate Precision-Recall curve and AUC
         precision_curve, recall_curve, _ = pr_curve(y_true_binary, y_scores)
         metrics_dict["auc_pr"] = auc(recall_curve, precision_curve)
         
@@ -750,7 +640,6 @@ def print_classification_report(
         target_names (TargetNames, optional): Display names for labels. If None, uses labels as strings.
         zero_division (Numeric, optional): Value for metrics when division by zero occurs. Defaults to 0.
     """
-    # Get the metrics dictionary
     metrics = calculate_metrics(y_true, y_pred, labels=labels, target_names=target_names, zero_division=zero_division)
 
     class_names_in_dict = list(metrics["classes"].keys())
@@ -758,23 +647,18 @@ def print_classification_report(
         print("Warning: No classes to report.")
         return
 
-    # --- Format the report string ---
     headers = ["precision", "recall", "f1-score", "support"]
-    # Determine column width based on longest label name and avg names
     name_width = max(len(name) for name in class_names_in_dict)
     avg_width = len("weighted avg")
     acc_width = len("accuracy")
     width = max(name_width, avg_width, acc_width) 
     
-    # Header line
     title = "Classification Report"
     report_str = f"\n{title}\n{'=' * len(title)}\n"
     
-    # Column headers
     header_fmt = '{:>{width}s} ' + ' {:>9s}' * len(headers)
     report_str += header_fmt.format('', *headers, width=width) + '\n\n'
 
-    # Per-class metrics lines
     row_fmt = '{:>{width}s} ' + ' {:>9.2f}' * 3 + ' {:>9d}\n'
     for name in class_names_in_dict:
         class_metrics = metrics["classes"][name]
@@ -785,22 +669,18 @@ def print_classification_report(
                                      int(class_metrics["support"]), 
                                      width=width)
 
-    report_str += '\n' # Separator line before averages
-
-    # --- Average metrics lines ---
-    # Accuracy (special format)
+    report_str += '\n' 
+    
     acc_fmt = '{:>{width}s} ' + ' {:>9s}' * 2 + ' {:>9.2f} {:>9d}\n'
     total_support_int = int(metrics["macro avg"]["support"]) # Get total support once
     report_str += acc_fmt.format('accuracy', '', '', metrics["accuracy"], total_support_int, width=width)
     
-    # Macro Average
     avg_fmt = '{:>{width}s} ' + ' {:>9.2f}' * 3 + ' {:>9d}\n'
     macro_metrics = metrics["macro avg"]
     report_str += avg_fmt.format('macro avg', 
                                  macro_metrics["precision"], macro_metrics["recall"], 
                                  macro_metrics["f1-score"], total_support_int, width=width)
     
-    # Weighted Average
     weighted_metrics = metrics["weighted avg"]
     report_str += avg_fmt.format('weighted avg', 
                                  weighted_metrics["precision"], weighted_metrics["recall"], 
@@ -814,10 +694,10 @@ def print_classification_report(
 def display_full_metrics(
     y_true: ArrayLike, 
     y_pred: ArrayLike, 
-    y_proba: Optional[np.ndarray] = None, # Use Optional[np.ndarray]
+    y_proba: Optional[np.ndarray] = None, 
     labels: Labels = None, 
     target_names: TargetNames = None, 
-    pos_label: Any = 1, # Label considered positive for binary case
+    pos_label: Any = 1,
     title_suffix: str = ""
 ) -> None:
     """
@@ -842,14 +722,12 @@ def display_full_metrics(
     y_true_arr = np.asarray(y_true)
     y_pred_arr = np.asarray(y_pred)
 
-    # Determine effective labels and names
     if labels is None:
         effective_labels = sorted(list(np.unique(np.concatenate((y_true_arr, y_pred_arr)))))
     else:
         effective_labels = list(labels)
     n_classes = len(effective_labels)
-    # label_to_ind = {label: i for i, label in enumerate(effective_labels)} # Needed? Maybe not here.
-
+    
     if target_names is None:
         effective_target_names = [str(l) for l in effective_labels]
     else:
@@ -857,37 +735,28 @@ def display_full_metrics(
         if len(effective_labels) != len(effective_target_names):
             raise ValueError("Length of labels and target_names must match.")
 
-    # --- 1. Print Text Report ---
     print_classification_report(y_true_arr, y_pred_arr, labels=effective_labels, target_names=effective_target_names)
 
-    # --- 2. Plot Confusion Matrix ---
     cm_title = f"Confusion Matrix {title_suffix}".strip()
     print(f"\n--- {cm_title} ---")
-    try:
-        fig_cm, ax_cm = plt.subplots(figsize=(6, 5)) 
-        plot_confusion_matrix(y_true_arr, y_pred_arr, labels=effective_labels, 
-                              display_labels=effective_target_names, title=cm_title, ax=ax_cm)
-        fig_cm.tight_layout() 
-        plt.show()
-    except Exception as e:
-        print(f"Error plotting confusion matrix: {e}")
 
-    # --- 3. Plot ROC and PR Curves (if y_proba provided) ---
+    fig_cm, ax_cm = plt.subplots(figsize=(6, 5)) 
+    plot_confusion_matrix(y_true_arr, y_pred_arr, labels=effective_labels, 
+                            display_labels=effective_target_names, title=cm_title, ax=ax_cm)
+    fig_cm.tight_layout() 
+    plt.show()
+
     if y_proba is not None:
         y_proba_arr = np.asarray(y_proba)
         print(f"\n--- Performance Curves {title_suffix} ---".strip())
         
         fig_curves, axes_curves = plt.subplots(1, 2, figsize=(14, 6))
-        # Use tab10, cycle if more than 10 classes
         cmap_curves = plt.cm.get_cmap('tab10', max(10, n_classes)) 
 
         is_binary = n_classes == 2
 
         if is_binary:
-            # --- Binary Plotting Logic ---
             print(f"Binary case detected (Classes: {effective_target_names}). Positive label assumed: '{pos_label}'")
-            
-            # Extract positive class scores
             y_scores: Optional[np.ndarray] = None
             if y_proba_arr.ndim == 2:
                 if y_proba_arr.shape[1] == n_classes:
@@ -897,19 +766,17 @@ def display_full_metrics(
                      except ValueError:
                          print(f"Warning: pos_label '{pos_label}' not found in labels '{effective_labels}'. Using scores from column 1.")
                          pos_label_idx = 1 
-                         y_scores = y_proba_arr[:, pos_label_idx] # Fallback assumes col 1 is positive
+                         y_scores = y_proba_arr[:, pos_label_idx] 
                 else:
                      print(f"Warning: y_proba is 2D but shape {y_proba_arr.shape} doesn't match n_classes={n_classes}. Cannot plot curves.")
             elif y_proba_arr.ndim == 1:
-                 y_scores = y_proba_arr # Assume it's already scores for positive class
+                 y_scores = y_proba_arr 
             else:
                  print(f"Warning: y_proba has unexpected shape {y_proba_arr.shape}. Cannot plot curves.")
 
             if y_scores is not None:
-                # Ensure y_true is binary (0/1 based on pos_label)
                 y_true_binary = (y_true_arr == pos_label).astype(int)
                 
-                # ROC Curve
                 fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
                 roc_auc = auc(fpr, tpr)
                 axes_curves[0].plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC (AUC = {roc_auc:.2f})')
@@ -919,7 +786,6 @@ def display_full_metrics(
                 axes_curves[0].set_ylabel('True Positive Rate (TPR)')
                 axes_curves[0].legend(loc="lower right")
 
-                # Precision-Recall Curve
                 precision, recall, _ = pr_curve(y_true_binary, y_scores)
                 pr_auc = auc(recall, precision) 
                 baseline = np.sum(y_true_binary) / len(y_true_binary) if len(y_true_binary) > 0 else 0
@@ -931,24 +797,21 @@ def display_full_metrics(
                 axes_curves[1].legend(loc="lower left")
 
         else:
-            # --- Multi-class (OvR) Plotting Logic ---
             print("Multi-class case detected. Plotting One-vs-Rest (OvR) curves.")
             if y_proba_arr.ndim != 2 or y_proba_arr.shape[1] != n_classes:
                  print(f"Error: Expected y_proba shape (n_samples, {n_classes}), got {y_proba_arr.shape}. Cannot plot OvR curves.")
                  plt.close(fig_curves) 
-                 return # Exit plotting if shape mismatch
+                 return 
 
-            # Plot ROC OvR
             axes_curves[0].plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', label='Random Chance')
             print("AUC ROC (OvR):")
             for i, label in enumerate(effective_labels):
                 y_true_binary = (y_true_arr == label)
-                # Check if this class actually exists in y_true
                 if np.sum(y_true_binary) == 0 or np.sum(y_true_binary) == len(y_true_arr): 
                     print(f"  - Skipping Class '{effective_target_names[i]}' (only one class present in y_true for OvR).")
                     continue 
                 
-                y_scores = y_proba_arr[:, i] # Assumes column i corresponds to label i
+                y_scores = y_proba_arr[:, i]
                 fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
                 roc_auc = auc(fpr, tpr)
                 print(f"  - Class '{effective_target_names[i]}': {roc_auc:.3f}")
@@ -959,7 +822,6 @@ def display_full_metrics(
             axes_curves[0].set_ylabel('True Positive Rate (TPR)')
             axes_curves[0].legend(loc="lower right", fontsize='small')
 
-            # Plot PR OvR
             print("\nAUC PR (OvR):")
             for i, label in enumerate(effective_labels):
                 y_true_binary = (y_true_arr == label)
@@ -972,20 +834,13 @@ def display_full_metrics(
                 baseline = np.sum(y_true_binary) / len(y_true_binary) if len(y_true_binary) > 0 else 0
                 axes_curves[1].plot(recall, precision, color=cmap_curves(i % cmap_curves.N), lw=2, 
                                      label=f'{effective_target_names[i]} (AUC = {pr_auc:.2f})')
-                # Plot baseline subtly
                 axes_curves[1].plot([0, 1], [baseline, baseline], color=cmap_curves(i % cmap_curves.N), lw=1, linestyle=':') 
 
             axes_curves[1].set_title(f'Precision-Recall Curves (OvR) {title_suffix}'.strip())
             axes_curves[1].set_xlabel('Recall')
             axes_curves[1].set_ylabel('Precision')
             axes_curves[1].legend(loc="lower left", fontsize='small')
-            # Add note about baseline?
-            # axes_curves[1].text(0.99, 0.01, 'Dashed lines are random baseline per class', 
-            #                     verticalalignment='bottom', horizontalalignment='right',
-            #                     transform=axes_curves[1].transAxes, color='grey', fontsize=8)
 
-
-        # Common adjustments for curve plots
         for ax in axes_curves:
             ax.set_xlim([0.0, 1.0])
             ax.set_ylim([0.0, 1.05])
@@ -993,6 +848,3 @@ def display_full_metrics(
 
         fig_curves.tight_layout()
         plt.show()
-
-    else: # y_proba was None
-        print("\nNote: `y_proba` not provided. Skipping ROC and Precision-Recall curve plots.")

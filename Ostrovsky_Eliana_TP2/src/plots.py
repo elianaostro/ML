@@ -10,8 +10,8 @@ def plot_decision_boundary(
     title: str = "Decision Boundary", 
     step: float = 0.02, 
     figsize: Tuple[float, float] = (10, 6),
-    cmap_background = plt.cm.RdYlBu, # Colormap for background
-    cmap_points = plt.cm.viridis    # Colormap for points
+    cmap_background = plt.cm.RdYlBu, 
+    cmap_points = plt.cm.viridis  
 ) -> None:
     """
     Plots the decision boundary of a trained 2D classifier model.
@@ -35,21 +35,15 @@ def plot_decision_boundary(
     if X.ndim != 2 or X.shape[1] != 2:
         raise ValueError(f"Input feature data X must have exactly 2 columns (shape n_samples, 2). Got shape {X.shape}")
 
-    # Define plot boundaries based on data range, adding a margin
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
     
-    # Create mesh grid
     xx, yy = np.meshgrid(np.arange(x_min, x_max, step),
                          np.arange(y_min, y_max, step))
     
-    # Predict class for each point on the grid
-    # Flatten mesh grid for prediction, then reshape result
     try:
         grid_points = np.c_[xx.ravel(), yy.ravel()]
         Z = model.predict(grid_points)
-        # Ensure Z contains numerical labels suitable for contourf
-        # Attempt conversion if needed, assuming model.predict returns labels
         try:
             Z = Z.astype(float) 
         except ValueError:

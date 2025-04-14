@@ -1,15 +1,13 @@
-# src/utils.py
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pickle
 from typing import List, Dict, Optional, Union, Tuple, Any, Sequence
 
-# Type Definitions for clarity
 ArrayLike = Union[List[Any], np.ndarray, pd.Series]
-Model = Any # Placeholder for generic model type
+Model = Any 
 Numeric = Union[int, float]
-ClassWeights = Optional[Union[Dict[Any, float], str]] # For class weights
+ClassWeights = Optional[Union[Dict[Any, float], str]] 
 Labels = Optional[Sequence[Any]] 
 TargetNames = Optional[List[str]]
 
@@ -37,25 +35,21 @@ def print_class_balance_report(
                     number of unique classes in `y`.
     """
     y_arr = np.asarray(y)
-    # Ensure consistent type for finding unique labels, convert to string
     y_str = y_arr.astype(str) 
     
     unique_classes, counts = np.unique(y_str, return_counts=True)
     total_samples = len(y_arr)
     
-    # Determine class names to use
     if class_names is None:
-        effective_class_names = list(unique_classes) # Use the string versions found
+        effective_class_names = list(unique_classes) 
     else:
         if len(class_names) != len(unique_classes):
             raise ValueError(f"Length of class_names ({len(class_names)}) must match the "
                              f"number of unique classes found in y ({len(unique_classes)}).")
-        effective_class_names = list(class_names) # Use provided names
-        
-    # Map unique string labels to effective names (handles case where labels != names)
+        effective_class_names = list(class_names) 
+
     class_map = {cls_str: name for cls_str, name in zip(unique_classes, effective_class_names)}
 
-    # Build the report dictionary
     report: Dict[str, Any] = {
         'counts': {},
         'proportions': {},
@@ -67,12 +61,10 @@ def print_class_balance_report(
         report['counts'][name] = count
         report['proportions'][name] = proportion
 
-    # Print the formatted report
     print("\nClass Balance Report")
     print("=" * 20)
     print(f"Total samples: {total_samples}")
     print("\nCounts per class:")
-    # Sort items for consistent print order
     for name, count in sorted(report['counts'].items()):
         proportion = report['proportions'][name]
         print(f"- {name}: {count} samples ({proportion:.2%})")
@@ -111,43 +103,31 @@ def calculate_sample_weights(
     n_samples = len(y_arr)
 
     if class_weights is None:
-        return np.ones(n_samples, dtype=float) # Return uniform weights
-
+        return np.ones(n_samples, dtype=float)
+    
     elif isinstance(class_weights, dict):
-        # Apply weights directly from the provided dictionary
         try:
-            # Use np.vectorize or list comprehension for mapping
-            # Need to handle labels in dict not matching y values
             unique_y = np.unique(y_arr)
             if not all(cls in class_weights for cls in unique_y):
                  missing = [cls for cls in unique_y if cls not in class_weights]
                  print(f"Warning: class_weights dict missing weights for labels: {missing}. "
                        f"Assigning weight 1.0 to these.")
             
-            # Use get with default 1.0 for missing keys
             sample_weights = np.array([class_weights.get(cls, 1.0) for cls in y_arr], dtype=float)
             return sample_weights
         except KeyError as e:
-             # This path might be less likely now with .get()
              raise ValueError(f"Label {e} found in y but not in class_weights dictionary.") from e
              
     elif class_weights == 'balanced':
-        # Calculate balanced weights
         unique_classes, counts = np.unique(y_arr, return_counts=True)
         n_classes = len(unique_classes)
         
         if n_classes < 2:
-            # print("Warning: Cannot compute balanced weights with fewer than 2 classes. Returning uniform weights.")
             return np.ones(n_samples, dtype=float)
-        
-        # Calculate weights: n_samples / (n_classes * count_per_class)
-        # Handle potential division by zero if a class count is 0 (shouldn't happen with unique)
         weights_per_class = n_samples / (n_classes * counts)
         
-        # Create a mapping from class label to its calculated weight
         weight_map = {cls: weight for cls, weight in zip(unique_classes, weights_per_class)}
         
-        # Map weights back to each sample
         sample_weights = np.array([weight_map[cls] for cls in y_arr], dtype=float)
         return sample_weights
         
@@ -174,7 +154,7 @@ def save_model(model: Any, filename: str) -> None:
         print(f"Model successfully saved to {filename}")
     except (IOError, pickle.PicklingError) as e:
         print(f"Error saving model to {filename}: {e}")
-        raise # Re-raise the exception
+        raise
 
 
 def load_model(filename: str) -> Any:
@@ -200,4 +180,4 @@ def load_model(filename: str) -> Any:
         return loaded_model
     except (IOError, pickle.UnpicklingError) as e:
         print(f"Error loading model from {filename}: {e}")
-        raise # Re-raise the exception
+        raise
