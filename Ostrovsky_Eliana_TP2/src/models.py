@@ -184,15 +184,15 @@ class LogisticRegression:
             if self.class_weight_config == 'balanced':
                 raw_balanced_weights = self._calculate_balanced_weights(y)
                 if raw_balanced_weights:
-                     self._actual_class_weights = {
-                         0: raw_balanced_weights.get(self.classes_[0], 1.0),
-                         1: raw_balanced_weights.get(self.classes_[1], 1.0)
-                     }
+                    self._actual_class_weights = {
+                        0: raw_balanced_weights.get(self.classes_[0], 1.0),
+                        1: raw_balanced_weights.get(self.classes_[1], 1.0)
+                    }
             elif isinstance(self.class_weight_config, dict):
-                 self._actual_class_weights = {
-                     0: self.class_weight_config.get(self.classes_[0], 1.0),
-                     1: self.class_weight_config.get(self.classes_[1], 1.0)
-                 }
+                self._actual_class_weights = {
+                    0: self.class_weight_config.get(self.classes_[0], 1.0),
+                    1: self.class_weight_config.get(self.classes_[1], 1.0)
+                }
 
         else:
             self.mode_ = 'multinomial'
@@ -216,10 +216,14 @@ class LogisticRegression:
                 
                 if self._actual_class_weights is not None:
                     weight_vector = np.array([self._actual_class_weights.get(int(label), 1.0) for label in binary_y])
-                    dw = (1 / n_samples) * np.dot(X.T, weight_vector * error) + (self.reg_lambda / n_samples) * self.weights
+                    dw_loss = (1 / n_samples) * np.dot(X.T, weight_vector * error)
+                    dw_reg = (self.reg_lambda / n_samples) * self.weights
+                    dw = dw_loss + dw_reg
                     db = (1 / n_samples) * np.sum(weight_vector * error)
                 else:
-                    dw = (1 / n_samples) * np.dot(X.T, error) + (self.reg_lambda / n_samples) * self.weights
+                    dw_loss = (1 / n_samples) * np.dot(X.T, error)
+                    dw_reg = (self.reg_lambda / n_samples) * self.weights
+                    dw = dw_loss + dw_reg
                     db = (1 / n_samples) * np.sum(error)
                 
                 self.weights -= self.learning_rate * dw
@@ -231,7 +235,9 @@ class LogisticRegression:
                 
                 error = h - y_one_hot
                 
-                dw = (1 / n_samples) * np.dot(X.T, error) + (self.reg_lambda / n_samples) * self.weights
+                dw_loss = (1 / n_samples) * np.dot(X.T, error)
+                dw_reg = (self.reg_lambda / n_samples) * self.weights
+                dw = dw_loss + dw_reg
                 db = (1 / n_samples) * np.sum(error, axis=0)
                 
                 self.weights -= self.learning_rate * dw

@@ -160,3 +160,5 @@ def SMOTE( X_df: pd.DataFrame, y_array: np.ndarray, k: int = 5, random_state: Op
     y_resampled_final = y_combined[final_indices]
 
     return X_resampled_final, y_resampled_final
+
+
