@@ -1,21 +1,13 @@
-# src/models.py (Unified Logistic Regression part)
 import numpy as np
 import pandas as pd
-from collections import Counter
-from typing import List, Dict, Optional, Union, Tuple, Any, Callable
+from typing import List, Dict, Optional, Union, Tuple, Any
 
-# Helper function for NumPy mode (remains the same)
 def _mode_1d(a: np.ndarray) -> Union[int, float, Any]:
     """Finds the most frequent value in a 1D NumPy array."""
     vals, counts = np.unique(a, return_counts=True)
     return vals[np.argmax(counts)]
 
-def Kmeans(
-    df: pd.DataFrame, 
-    n_clusters: int = 3, 
-    max_iter: int = 100, 
-    random_state: Optional[int] = None
-) -> Tuple[np.ndarray, pd.DataFrame]:
+def KMeans(df: pd.DataFrame, n_clusters: int = 3, max_iter: int = 100, random_state: Optional[int] = None) -> Tuple[np.ndarray, pd.DataFrame]:
     """
     Performs K-Means clustering on a Pandas DataFrame.
 
@@ -44,61 +36,40 @@ def Kmeans(
     if random_state is not None:
         np.random.seed(random_state)
 
-    X = df.values  # Work with NumPy array internally for efficiency
+    X = df.values
     n_samples, n_features = X.shape
 
-    if n_clusters < 1 or n_clusters > n_samples:
-        raise ValueError(f"Number of clusters ({n_clusters}) must be between 1 and "
-                         f"the number of samples ({n_samples}).")
-
-    # Initialize centroids using random sample indices from the DataFrame's index
-    # Ensure indices chosen are valid for array indexing if df index is not 0-based range
     initial_centroid_indices = np.random.choice(n_samples, n_clusters, replace=False)
     centroids = X[initial_centroid_indices]
 
-    labels = np.zeros(n_samples, dtype=int) # Initialize labels
+    labels = np.zeros(n_samples, dtype=int)
 
     for iteration in range(max_iter):
-        # Assign labels based on closest centroid (vectorized distance calculation)
-        # distances shape: (n_clusters, n_samples)
         distances = np.sqrt(np.sum((X - centroids[:, np.newaxis, :])**2, axis=2))
         new_labels = np.argmin(distances, axis=0)
 
-        # Check if labels changed (optional optimization)
         if iteration > 0 and np.array_equal(new_labels, labels):
-             # print(f"KMeans converged early at iteration {iteration} (labels did not change).")
-             # break # Can break early if labels stabilize
-             pass # Continue to check centroid convergence instead
+             print(f"KMeans converged early at iteration {iteration} (labels did not change).")
+             break
 
-        labels = new_labels # Update labels
+        labels = new_labels
 
-        # Update centroids by calculating the mean of assigned samples
         new_centroids = np.zeros_like(centroids)
-        converged = True
         for k in range(n_clusters):
             cluster_samples = X[labels == k]
-            # Handle empty clusters (e.g., reinitialize centroid or keep old one)
             if len(cluster_samples) == 0:
                 print(f"Warning: Cluster {k} became empty during iteration {iteration}. "
                       f"Keeping previous centroid.")
-                # Option 1: Keep old centroid
-                new_centroids[k] = centroids[k] 
-                # Option 2: Reinitialize randomly (could lead to oscillations)
-                # random_idx = np.random.choice(n_samples)
-                # new_centroids[k] = X[random_idx]
-                converged = False # Ensure convergence isn't declared if cluster was empty
+                random_idx = np.random.choice(n_samples)
+                new_centroids[k] = X[random_idx]
             else:
                 new_centroids[k] = cluster_samples.mean(axis=0)
 
-        # Check for centroid convergence
-        if np.allclose(centroids, new_centroids, atol=1e-6): # Use tolerance for float comparison
-            # print(f"KMeans converged at iteration {iteration} (centroids stabilized).")
-            centroids = new_centroids # Ensure final centroids are stored
-            break
-            
         centroids = new_centroids
 
-    # Convert final centroids back to a DataFrame with original column names
+        if np.allclose(centroids, new_centroids, atol=1e-6): 
+            break
+            
     centroids_df = pd.DataFrame(centroids, columns=df.columns)
 
     return labels, centroids_df
@@ -128,13 +99,7 @@ class LogisticRegression:
             (shape [n_classes]). Sorted.
         mode_ (Optional[str]): Indicates the mode of operation: 'binary' or 'multinomial'. Set during fit.
     """
-    def __init__(
-        self, 
-        learning_rate: float = 0.01, 
-        n_iterations: int = 1000, 
-        reg_lambda: float = 0.1, 
-        class_weight: Optional[Union[Dict[Any, float], str]] = None # Note: Primarily for binary
-    ) -> None:
+    def __init__(self, learning_rate: float = 0.01, n_iterations: int = 1000, reg_lambda: float = 0.1, class_weight: Optional[Union[Dict[Any, float], str]] = None) -> None:
         """
         Initializes the unified LogisticRegression classifier.
 
@@ -150,21 +115,17 @@ class LogisticRegression:
         self.learning_rate: float = learning_rate
         self.n_iterations: int = n_iterations
         self.reg_lambda: float = reg_lambda
-        self.class_weight_config: Optional[Union[Dict[Any, float], str]] = class_weight # Store config
+        self.class_weight_config: Optional[Union[Dict[Any, float], str]] = class_weight 
         
-        # Attributes to be set during fit
         self.weights: Optional[np.ndarray] = None
         self.bias: Optional[Union[float, np.ndarray]] = None
         self.classes_: Optional[np.ndarray] = None
-        self.mode_: Optional[str] = None # 'binary' or 'multinomial'
+        self.mode_: Optional[str] = None 
         
-        # Internal helpers
         self._n_classes: Optional[int] = None
-        self._actual_class_weights: Optional[Dict[Any, float]] = None # Effective weights used (binary only)
-        self._class_map: Optional[Dict[Any, int]] = None # Map original class label to 0..k-1 index
+        self._actual_class_weights: Optional[Dict[Any, float]] = None
+        self._class_map: Optional[Dict[Any, int]] = None 
 
-
-    # --- Activation Functions ---
     def _sigmoid(self, z: np.ndarray) -> np.ndarray:
         """Applies the sigmoid function element-wise."""
         z_clipped = np.clip(z, -500, 500)
@@ -172,70 +133,41 @@ class LogisticRegression:
 
     def _softmax(self, z: np.ndarray) -> np.ndarray:
         """Applies the softmax function numerically stably along axis 1."""
-        # Subtract max along the class dimension (axis=1) for stability
         exp_z = np.exp(z - np.max(z, axis=1, keepdims=True))
         return exp_z / np.sum(exp_z, axis=1, keepdims=True)
 
-    # --- Loss Computation ---
-    def _compute_loss(
-        self, 
-        h: np.ndarray, 
-        y: Union[np.ndarray, np.ndarray], # y (binary) or y_one_hot (multinomial)
-        weights: np.ndarray,
-        bias: Union[float, np.ndarray], 
-        n_samples: int
-    ) -> float:
-        """Calculates the regularized loss based on the detected mode."""
-        epsilon = 1e-15 # For numerical stability log(0)
+    # def _compute_loss(self, h: np.ndarray, y: Union[np.ndarray, np.ndarray], weights: np.ndarray, n_samples: int) -> float:
+    #     """Calculates the regularized loss based on the detected mode."""
+    #     epsilon = 1e-15 
         
-        # L2 Regularization term (applies to weights only, not bias typically)
-        l2_reg = (self.reg_lambda / (2 * n_samples)) * np.sum(weights**2)
+    #     l2_reg = (self.reg_lambda / (2 * n_samples)) * np.sum(weights**2)
 
-        if self.mode_ == 'binary':
-            # Binary Cross-Entropy
-            loss = y * np.log(h + epsilon) + (1 - y) * np.log(1 - h + epsilon)
-            if self._actual_class_weights is not None:
-                # Assuming y is 0/1, map weights
-                weight_vector = np.array([self._actual_class_weights.get(int(label), 1.0) for label in y])
-                cost = (-1 / n_samples) * np.sum(weight_vector * loss) + l2_reg
-            else:
-                cost = (-1 / n_samples) * np.sum(loss) + l2_reg
+    #     if self.mode_ == 'binary':
+    #         loss = y * np.log(h + epsilon) + (1 - y) * np.log(1 - h + epsilon)
+    #         if self._actual_class_weights is not None:
+    #             weight_vector = np.array([self._actual_class_weights.get(int(label), 1.0) for label in y])
+    #             cost = (-1 / n_samples) * np.sum(weight_vector * loss) + l2_reg
+    #         else:
+    #             cost = (-1 / n_samples) * np.sum(loss) + l2_reg
         
-        elif self.mode_ == 'multinomial':
-            # Categorical Cross-Entropy (y is y_one_hot here)
-            cost = (-1 / n_samples) * np.sum(y * np.log(h + epsilon)) + l2_reg
-        
-        else: 
-            # Should not happen if fit logic is correct
-            raise RuntimeError("Model mode not set or invalid.")
-            
-        return float(cost)
+    #     elif self.mode_ == 'multinomial':
+    #         cost = (-1 / n_samples) * np.sum(y * np.log(h + epsilon)) + l2_reg
+
+    #     return float(cost)
 
 
-    # --- Weight Calculation (Binary Only) ---
     def _calculate_balanced_weights(self, y: np.ndarray) -> Optional[Dict[Any, float]]:
         """Calculates weights for 'balanced' mode (binary only)."""
         n_samples = len(y)
         unique_classes, class_counts = np.unique(y, return_counts=True)
-        n_classes = len(unique_classes) # Should be 2
-
-        if n_classes != 2:
-            print(f"Warning: 'balanced' weights require exactly 2 classes. Found {n_classes}. Ignoring.")
-            return None
-            
-        # Calculate weights: n_samples / (n_classes * n_samples_per_class)
+        n_classes = len(unique_classes)            
         weights = n_samples / (n_classes * class_counts)
         
-        # Return dict mapping class label to weight
         return {cls: weight for cls, weight in zip(unique_classes, weights)}
 
 
-    # --- One-Hot Encoding (Multinomial Only) ---
     def _one_hot_encode(self, y: np.ndarray) -> np.ndarray:
         """Converts class labels into a one-hot encoded matrix."""
-        if self._n_classes is None or self._class_map is None:
-             raise RuntimeError("Class information not available. Ensure fit() has been called.")
-             
         y_one_hot = np.zeros((len(y), self._n_classes))
         for i, label in enumerate(y):
             if label in self._class_map:
@@ -243,7 +175,6 @@ class LogisticRegression:
         return y_one_hot
 
 
-    # --- Fit Method ---
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         """
         Trains the Logistic Regression model using gradient descent.
@@ -265,7 +196,6 @@ class LogisticRegression:
         # --- Mode Detection ---
         if self._n_classes == 2:
             self.mode_ = 'binary'
-            print("Binary classification mode detected.")
             
             # Ensure binary labels are 0 and 1 for internal calculations
             # Store the original classes in self.classes_
@@ -294,7 +224,6 @@ class LogisticRegression:
 
         else: # Multi-class case
             self.mode_ = 'multinomial'
-            print(f"Multinomial classification mode detected ({self._n_classes} classes).")
             
             # Warn if class weights were provided for multi-class
             if self.class_weight_config is not None:
@@ -351,7 +280,6 @@ class LogisticRegression:
             #     loss = self._compute_loss(h, target_for_loss, self.weights, self.bias, n_samples)
             #     print(f"Iteration {i}, Loss: {loss:.4f}")
 
-    # --- Prediction Methods ---
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
         Predicts class probabilities for the input data.
@@ -373,10 +301,9 @@ class LogisticRegression:
             linear_model = np.dot(X, self.weights) + self.bias
             proba_class1 = self._sigmoid(linear_model)
             proba_class0 = 1 - proba_class1
-            # Ensure shape (n_samples, 2)
             return np.column_stack((proba_class0, proba_class1))
             
-        else: # Multinomial
+        else: 
             linear_model = np.dot(X, self.weights) + self.bias
             return self._softmax(linear_model)
 
@@ -434,8 +361,6 @@ class LogisticRegression:
                 # Print corresponding bias for this class
                 print(f"    Bias: {self.bias[i]:.4f}") 
         print()
-
-
 
 class LDA:
     """
@@ -650,7 +575,6 @@ class LDA:
         # print(np.array2string(self.shared_covariance, precision=4, suppress_small=True))
         print()
 
-# Type alias for the recursive tree structure
 DecisionTreeNode = Dict[str, Any] 
 
 class DecisionTree:

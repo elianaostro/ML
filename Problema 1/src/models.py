@@ -1,4 +1,72 @@
 import numpy as np
+import pandas as pd
+
+def Kmeans(df: pd.DataFrame, n_clusters: int = 3, max_iter: int = 100, random_state: Optional[int] = None) -> Tuple[np.ndarray, pd.DataFrame]:
+    """
+    Performs K-Means clustering on a Pandas DataFrame.
+
+    Initializes centroids by randomly choosing distinct samples from the DataFrame.
+    Iteratively assigns samples to the nearest centroid and updates centroids 
+    until convergence or max_iter is reached.
+
+    Args:
+        df (pd.DataFrame): Input DataFrame with numerical features.
+        n_clusters (int, optional): The number of clusters to form. Defaults to 3.
+        max_iter (int, optional): Maximum number of iterations for the algorithm. 
+                                  Defaults to 100.
+        random_state (Optional[int], optional): Seed for random number generation 
+                                                for centroid initialization. Defaults to None.
+
+    Returns:
+        Tuple[np.ndarray, pd.DataFrame]: A tuple containing:
+            - labels (np.ndarray): Cluster labels assigned to each sample in the input df 
+                                   (corresponding to the original order).
+            - centroids_df (pd.DataFrame): DataFrame containing the final centroid positions,
+                                           with columns matching the input df.
+                                           
+    Raises:
+        ValueError: If n_clusters is less than 1 or greater than the number of samples.
+    """
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    X = df.values
+    n_samples, n_features = X.shape
+
+    initial_centroid_indices = np.random.choice(n_samples, n_clusters, replace=False)
+    centroids = X[initial_centroid_indices]
+
+    labels = np.zeros(n_samples, dtype=int)
+
+    for iteration in range(max_iter):
+        distances = np.sqrt(np.sum((X - centroids[:, np.newaxis, :])**2, axis=2))
+        new_labels = np.argmin(distances, axis=0)
+
+        if iteration > 0 and np.array_equal(new_labels, labels):
+             print(f"KMeans converged early at iteration {iteration} (labels did not change).")
+             break
+
+        labels = new_labels
+
+        new_centroids = np.zeros_like(centroids)
+        for k in range(n_clusters):
+            cluster_samples = X[labels == k]
+            if len(cluster_samples) == 0:
+                print(f"Warning: Cluster {k} became empty during iteration {iteration}. "
+                      f"Keeping previous centroid.")
+                random_idx = np.random.choice(n_samples)
+                new_centroids[k] = X[random_idx]
+            else:
+                new_centroids[k] = cluster_samples.mean(axis=0)
+
+        centroids = new_centroids
+
+        if np.allclose(centroids, new_centroids, atol=1e-6): 
+            break
+            
+    centroids_df = pd.DataFrame(centroids, columns=df.columns)
+
+    return labels, centroids_df
 
 class LogisticRegression:
     """

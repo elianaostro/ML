@@ -301,9 +301,6 @@ def f1_score(
         f1 = (2 * precision * recall) / denominator if denominator > 0 else float(zero_division)
         return float(f1)
 
-# --------------------------------------------------------------------------
-# ROC / PR Curve Functions
-# --------------------------------------------------------------------------
 
 def roc_curve(y_true: ArrayLike, y_proba: ArrayLike) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -577,22 +574,53 @@ def plot_confusion_matrix(
 # Refactored High-Level Functions
 # --------------------------------------------------------------------------
 
+def format_metrics_for_plot(metrics_dict: Dict[str, Any]) -> List[Tuple[str, float]]:
+    """
+    Formats a metrics dictionary into a list of tuples suitable for plotting.
+    
+    Args:
+        metrics_dict (Dict[str, Any]): Dictionary containing calculated metrics
+        
+    Returns:
+        List[Tuple[str, float]]: List of (metric_name, metric_value) pairs
+    """
+    metrics_to_plot = [
+        ('Accuracy', metrics_dict.get('accuracy', 0)),
+        ('Precision', metrics_dict.get('precision', 0)),
+        ('Recall', metrics_dict.get('recall', 0)),
+        ('F1-Score', metrics_dict.get('f1_score', 0))
+    ]
+    
+    # Add AUC metrics if they exist
+    if 'auc_roc' in metrics_dict:
+        metrics_to_plot.append(('AUC-ROC', metrics_dict['auc_roc']))
+    if 'auc_pr' in metrics_dict:
+        metrics_to_plot.append(('AUC-PR', metrics_dict['auc_pr']))
+        
+    return metrics_to_plot
+
 def calculate_metrics(
     y_true: ArrayLike, 
     y_pred: ArrayLike, 
+    y_proba: Optional[np.ndarray] = None,  # Added probability scores parameter
     labels: Labels = None, 
     target_names: TargetNames = None, 
-    zero_division: Numeric = 0
+    zero_division: Numeric = 0,
+    pos_label: Any = 1  # Added positive label parameter
 ) -> Dict[str, Any]:
     """
     Calculates main classification metrics and returns them in a structured dictionary.
+    For binary classification, includes additional metrics like AUC-ROC and AUC-PR when y_proba is provided.
 
     Args:
         y_true (ArrayLike): Ground truth target values.
         y_pred (ArrayLike): Estimated targets.
+        y_proba (Optional[np.ndarray], optional): Predicted probabilities for the positive class.
+            Required for AUC calculations. Defaults to None.
         labels (Labels, optional): List of labels to include. If None, uses labels present.
         target_names (TargetNames, optional): Display names for labels. If None, uses labels as strings.
         zero_division (Numeric, optional): Value for metrics when division by zero occurs. Defaults to 0.
+        pos_label (Any, optional): Label to consider as positive class for binary metrics. Defaults to 1.
 
     Returns:
         Dict[str, Any]: A dictionary containing:
@@ -601,6 +629,9 @@ def calculate_metrics(
             - 'accuracy' (float): Overall accuracy.
             - 'macro avg' (Dict[str, float]): Macro averages for precision, recall, f1-score, and total support.
             - 'weighted avg' (Dict[str, float]): Weighted averages for precision, recall, f1-score, and total support.
+            - Additional binary metrics if binary classification and y_proba provided:
+                - 'auc_roc' (float): Area under ROC curve.
+                - 'auc_pr' (float): Area under Precision-Recall curve.
     """
     y_true_arr = np.asarray(y_true)
     y_pred_arr = np.asarray(y_pred)
@@ -617,11 +648,23 @@ def calculate_metrics(
         effective_target_names = list(target_names)
         if len(effective_labels) != len(effective_target_names):
              raise ValueError("Length of labels and target_names must match.")
+             
+    is_binary = len(effective_labels) == 2
 
     # Calculate per-class metrics
     p = precision_score(y_true_arr, y_pred_arr, labels=effective_labels, average=None, zero_division=zero_division)
     r = recall_score(y_true_arr, y_pred_arr, labels=effective_labels, average=None, zero_division=zero_division)
     f1 = f1_score(y_true_arr, y_pred_arr, labels=effective_labels, average=None, zero_division=zero_division)
+    
+    # Calculate binary averages
+    if is_binary:
+        precision = precision_score(y_true_arr, y_pred_arr, average='binary', zero_division=zero_division)
+        recall = recall_score(y_true_arr, y_pred_arr, average='binary', zero_division=zero_division)
+        f1_value = f1_score(y_true_arr, y_pred_arr, average='binary', zero_division=zero_division)
+    else:
+        precision = precision_score(y_true_arr, y_pred_arr, average='weighted', zero_division=zero_division)
+        recall = recall_score(y_true_arr, y_pred_arr, average='weighted', zero_division=zero_division)
+        f1_value = f1_score(y_true_arr, y_pred_arr, average='weighted', zero_division=zero_division)
     
     # Calculate support
     true_counts = Counter(y_true_arr)
@@ -640,10 +683,12 @@ def calculate_metrics(
     weighted_r = np.average(r, weights=support) if total_support > 0 else float(zero_division)
     weighted_f1 = np.average(f1, weights=support) if total_support > 0 else float(zero_division)
 
-    # Build the results dictionary
     metrics_dict: Dict[str, Any] = {
         "classes": {}, 
         "accuracy": accuracy,
+        "precision": precision,
+        "recall": recall,
+        "f1_score": f1_value,
         "macro avg": {
             "precision": macro_p, "recall": macro_r, "f1-score": macro_f1, "support": total_support
         },
@@ -651,12 +696,40 @@ def calculate_metrics(
             "precision": weighted_p, "recall": weighted_r, "f1-score": weighted_f1, "support": total_support
         }
     }
+    
     # Populate per-class metrics
     for i, name in enumerate(effective_target_names):
         metrics_dict["classes"][name] = {
             "precision": p[i], "recall": r[i], "f1-score": f1[i], "support": support[i]
         }
-
+    # Calculate AUC metrics for binary classification if probabilities are provided
+    if is_binary and y_proba is not None:
+        y_proba_arr = np.asarray(y_proba)
+        
+        # Extract probability for positive class
+        if y_proba_arr.ndim == 2 and y_proba_arr.shape[1] >= 2:
+            # Find the index of the positive label
+            try:
+                pos_idx = effective_labels.index(pos_label)
+                y_scores = y_proba_arr[:, pos_idx]
+            except ValueError:
+                # Fallback to second column if pos_label not found
+                y_scores = y_proba_arr[:, 1]
+        else:
+            # Assume 1D array contains scores for positive class
+            y_scores = y_proba_arr
+            
+        # Convert to binary format for ROC/PR calculations
+        y_true_binary = (y_true_arr == pos_label).astype(int)
+        
+        # Calculate ROC curve and AUC
+        fpr, tpr, _ = roc_curve(y_true_binary, y_scores)
+        metrics_dict["auc_roc"] = auc(fpr, tpr)
+        
+        # Calculate Precision-Recall curve and AUC
+        precision_curve, recall_curve, _ = pr_curve(y_true_binary, y_scores)
+        metrics_dict["auc_pr"] = auc(recall_curve, precision_curve)
+        
     return metrics_dict
 
 
