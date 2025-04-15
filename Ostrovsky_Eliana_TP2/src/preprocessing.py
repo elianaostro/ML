@@ -1,8 +1,7 @@
 from math import dist
 import numpy as np
 import pandas as pd
-from typing import Tuple, Optional, List, Union
-from models import KMeans
+from typing import Tuple, Optional, List
 
 def apply_variable_limits(df: pd.DataFrame) -> pd.DataFrame:
     """

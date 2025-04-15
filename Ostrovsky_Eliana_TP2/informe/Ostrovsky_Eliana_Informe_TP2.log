@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.5.23)  14 APR 2025 15:14
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2024.5.23)  14 APR 2025 23:59
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/Ostrovsky_Eliana_Informe_TP2.tex
-(/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/Ostrovsky_Eliana_Informe_TP2.tex
+**/home/elianaostro/Documents/ML/informe/Ostrovsky_Eliana_Informe_TP2.tex
+(/home/elianaostro/Documents/ML/informe/Ostrovsky_Eliana_Informe_TP2.tex
 LaTeX2e <2021-11-15> patch level 1
 L3 programming layer <2022-01-21> (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
@@ -381,76 +381,82 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.40 
-      [1]
-Overfull \hbox (1.05478pt too wide) in paragraph at lines 53--54
+l.40     \item \textbf
+                      {Aplicación de límites a variables}: Se estableciero... [1]
+Overfull \hbox (1.05478pt too wide) in paragraph at lines 49--50
 []\OT1/cmr/m/n/10.95 Para las va-ria-bles ca-teg^^Sori-cas, se rea-li-za-ron trans-for-ma-cio-nes es-pec^^S^^Pfi-cas: la va-ria-ble CellTy-
  []
 
-[2]
-Overfull \hbox (0.91208pt too wide) in paragraph at lines 68--69
+
+Overfull \hbox (0.91208pt too wide) in paragraph at lines 62--63
 []\OT1/cmr/m/it/10.95 SMOTE \OT1/cmr/m/n/10.95 (Synthe-tic Mi-no-rity Over-sampling TEch-ni-que): ge-ne-ra-ci^^Son de mues-tras sint^^Seti-
  []
 
+[2]
 <figuras/confusion_matrix_balanced.png, id=96, 397.485pt x 362.7954pt>
 File: figuras/confusion_matrix_balanced.png Graphic file (type png)
 <use figuras/confusion_matrix_balanced.png>
-Package pdftex.def Info: figuras/confusion_matrix_balanced.png  used on input line 92.
-(pdftex.def)             Requested size: 354.86412pt x 323.90547pt.
+Package pdftex.def Info: figuras/confusion_matrix_balanced.png  used on input line 86.
+(pdftex.def)             Requested size: 221.78923pt x 202.43884pt.
+
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[3]
-Overfull \hbox (41.41203pt too wide) in paragraph at lines 107--118
+
+Overfull \hbox (41.41203pt too wide) in paragraph at lines 101--112
  [][] 
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<figuras/roc_pr_curves.png, id=102, 1004.553pt x 426.393pt>
+<figuras/roc_pr_curves.png, id=98, 1004.553pt x 426.393pt>
 File: figuras/roc_pr_curves.png Graphic file (type png)
 <use figuras/roc_pr_curves.png>
-Package pdftex.def Info: figuras/roc_pr_curves.png  used on input line 124.
+Package pdftex.def Info: figuras/roc_pr_curves.png  used on input line 118.
 (pdftex.def)             Requested size: 443.57848pt x 188.28363pt.
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-[4 <./figuras/confusion_matrix_balanced.png>] [5 <./figuras/roc_pr_curves.png>]
-Overfull \hbox (11.55594pt too wide) in paragraph at lines 145--146
+[3] [4 <./figuras/confusion_matrix_balanced.png>]
+Overfull \hbox (11.55594pt too wide) in paragraph at lines 139--140
 []\OT1/cmr/m/n/10.95 Los mo-de-los en-tre-na-dos (Diag-nos-ti-co[]balance[]model.pkl y Diag-nos-ti-co[]imbalance[]model.pkl)
  []
 
-[6]) (./problema2.tex [7] [8] [9]
+[5 <./figuras/roc_pr_curves.png>]) (./problema2.tex [6] [7]
 Overfull \hbox (28.43918pt too wide) in paragraph at lines 84--93
  [][] 
  []
 
-<figuras/confusion_matrices.png, id=139, 1076.1003pt x 363.5181pt>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[8]
+<figuras/confusion_matrices.png, id=131, 1076.1003pt x 363.5181pt>
 File: figuras/confusion_matrices.png Graphic file (type png)
 <use figuras/confusion_matrices.png>
 Package pdftex.def Info: figuras/confusion_matrices.png  used on input line 99.
 (pdftex.def)             Requested size: 443.57848pt x 149.84212pt.
-[10 <./figuras/confusion_matrices.png>]) [11] (./Ostrovsky_Eliana_Informe_TP2.aux
+ [9 <./figuras/confusion_matrices.png>]) [10] (./Ostrovsky_Eliana_Informe_TP2.aux
 LaTeX Info: Redefining \. on input line 25.
 LaTeX Info: Redefining \% on input line 25.
 )
 Package rerunfilecheck Info: File `Ostrovsky_Eliana_Informe_TP2.out' has not changed.
-(rerunfilecheck)             Checksum: C7FDE9B58B0A1FBB8012DEA63B18F523;2689.
+(rerunfilecheck)             Checksum: 9152E93F796B9C54F6775926DC1B1B9B;2654.
  ) 
 Here is how much of TeX's memory you used:
- 12511 strings out of 480185
- 199920 string characters out of 5894213
- 503790 words of memory out of 5000000
+ 12506 strings out of 480185
+ 199816 string characters out of 5894213
+ 504788 words of memory out of 5000000
  30261 multiletter control sequences out of 15000+600000
  481465 words of font info for 73 fonts, out of 8000000 for 9000
  40 hyphenation exceptions out of 8191
- 60i,9n,63p,770b,460s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 60i,9n,63p,899b,420s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Ostrovsky_Eliana_Informe_TP2.pdf (12 pages, 344621 bytes).
+Output written on Ostrovsky_Eliana_Informe_TP2.pdf (11 pages, 342246 bytes).
 PDF statistics:
- 235 PDF objects out of 1000 (max. 8388607)
- 178 compressed objects within 2 object streams
- 40 named destinations out of 1000 (max. 500000)
+ 224 PDF objects out of 1000 (max. 8388607)
+ 168 compressed objects within 2 object streams
+ 35 named destinations out of 1000 (max. 500000)
  141 words of extra memory for PDF output out of 10000 (max. 10000000)
 

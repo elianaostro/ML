@@ -56,9 +56,9 @@ Los datos se dividieron en 80\% para entrenamiento y 20\% para validación. Ante
 
 \vspace{0.3cm}
 \noindent \textbf{Selección de hiperparámetros} \\
-Para la regresión logística multiclase, se utilizó una tasa de aprendizaje de 0.1, 1000 iteraciones y un parámetro de regularización $\lambda = 0.1$.
+Para la regresión logística multiclase, se realizó una búsqueda exhaustiva de hiperparámetros mediante validación cruzada con 5 folds, evaluando múltiples configuraciones que combinaban diferentes tasas de aprendizaje (0.001, 0.01, 0.1), números de iteraciones (500, 1000, 2000) y valores de regularización (15 valores entre $10^{-5}$ y $10^{3}$). La configuración óptima resultó ser una tasa de aprendizaje de 0.1, 2000 iteraciones y un parámetro de regularización $\lambda = 10^{-5}$.
 
-Para el Random Forest, se realizó una búsqueda exhaustiva de hiperparámetros mediante validación cruzada con 5 folds, evaluando 7 configuraciones diferentes en las que se variaron: número de árboles (100-150), profundidad máxima (5-10 o sin límite), mínimo número de muestras para división (2-5) y proporción de características a considerar en cada división (todas o 70\%). El F1-score ponderado fue la métrica utilizada para seleccionar la mejor configuración, resultando en: 150 árboles, profundidad máxima de 8, mínimo de 5 muestras para dividir un nodo y uso del 70\% de las características en cada división.
+Para el Random Forest, también se realizó una búsqueda exhaustiva de hiperparámetros mediante validación cruzada con 5 folds, evaluando 7 configuraciones diferentes en las que se variaron: número de árboles (100-150), profundidad máxima (5-10 o sin límite), mínimo número de muestras para división (2-5) y proporción de características a considerar en cada división (todas o 70\%). El F1-score ponderado fue la métrica utilizada para seleccionar la mejor configuración, resultando en: 150 árboles, profundidad máxima de 8, mínimo de 5 muestras para dividir un nodo y uso del 70\% de las características en cada división.
 
 \vspace{0.3cm}
 \noindent \textbf{Métricas de evaluación} \\
@@ -86,8 +86,8 @@ Los tres modelos implementados fueron evaluados en el conjunto de validación y 
 \textbf{Modelo} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{AUC-ROC} & \textbf{AUC-PR} \\
 \hline
 LDA & 0.9051 & 0.9153 & 0.9051 & 0.9101 & 0.9691 & 0.9266 \\
-Regresión Logística & 0.9169 & 0.9197 & 0.9169 & 0.9183 & 0.9686 & 0.9215 \\
-Random Forest & \textbf{0.9522} & \textbf{0.9540} & \textbf{0.9522} & \textbf{0.9531} & \textbf{0.9928} & \textbf{0.9877} \\
+Regresión Logística & 0.9204 & 0.9229 & 0.9204 & 0.9217 & 0.9707 & 0.9234 \\
+Random Forest & \textbf{0.9593} & \textbf{0.9605} & \textbf{0.9593} & \textbf{0.9599} & \textbf{0.9932} & \textbf{0.9881} \\
 \hline
 \end{tabular}
 \end{table}
@@ -107,8 +107,12 @@ La comparación entre las métricas obtenidas en validación y prueba muestra un
 
 Es interesante notar que todas las clases muestran AUC-ROC superior a 0.97 en el caso del Random Forest, indicando una excelente capacidad de discriminación. El modelo parece captar eficientemente las relaciones entre las variables de entrada y el rendimiento de los jugadores, incluso para los casos fronterizos entre clases adyacentes.
 
+\subsection{Discusión y Conclusiones}
+
 La superioridad del Random Forest probablemente se debe a su capacidad para capturar relaciones no lineales entre las variables y el manejo implícito de interacciones entre características. Esto es particularmente valioso en este contexto, donde el rendimiento de un jugador de baloncesto puede depender de combinaciones complejas de sus estadísticas individuales. Además, el proceso de optimización de hiperparámetros mediante validación cruzada permitió encontrar una configuración que balancea adecuadamente la complejidad del modelo y su capacidad de generalización.
 
 Por otro lado, tanto LDA como la regresión logística, al ser modelos lineales, tienen limitaciones inherentes para capturar patrones complejos en los datos. A pesar de esto, ambos modelos lograron un rendimiento respetable, con exactitudes superiores al 90\%, lo que sugiere que existe una estructura lineal significativa en los datos que estos modelos pudieron aprovechar.
 
-En un entorno de producción, el modelo Random Forest sería la elección más recomendable debido a su superior rendimiento predictivo en todas las métricas. Sin embargo, si la interpretabilidad fuera un factor crítico, la regresión logística podría ser preferible, ya que sus coeficientes proporcionan información directa sobre la influencia de cada variable en la clasificación.
+Las métricas obtenidas en los conjuntos de validación (91.75\% para RF, 90.71\% para RL y 89.09\% para LDA) fueron consistentemente cercanas a las obtenidas en el conjunto de prueba, lo que valida la robustez de nuestro proceso de evaluación. Esta consistencia indica que las estimaciones de error mediante validación cruzada fueron confiables y representativas del rendimiento real de los modelos. En el caso de Random Forest, la ligera mejora en el conjunto de prueba podría atribuirse a la estabilidad adicional proporcionada por el entrenamiento con el conjunto completo de desarrollo.
+
+En un entorno de producción, el modelo Random Forest sería la elección más recomendable debido a su superior rendimiento predictivo en todas las métricas. Sin embargo, si la interpretabilidad fuera un factor crítico, la regresión logística podría ser preferible, ya que sus coeficientes proporcionan información directa sobre la influencia de cada variable en la clasificación. El hecho de que nuestro modelo Random Forest alcanzara un 95.22\% de exactitud indica que es posible predecir con alta confiabilidad el impacto que un jugador tendrá en términos de victorias para su equipo basándonos únicamente en sus estadísticas individuales, lo que representa una herramienta valiosa para la gestión deportiva y la toma de decisiones estratégicas en equipos de basketball.

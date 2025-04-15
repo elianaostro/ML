@@ -34,29 +34,23 @@ donde $y^{(i)}$ es la etiqueta verdadera, $\hat{y}^{(i)}$ la probabilidad predic
 \noindent \textbf{Conjunto de datos y preprocesamiento.} \\
 Se utilizaron tres conjuntos de datos: uno balanceado para entrenamiento y prueba, y otro desbalanceado para evaluar distintas estrategias de rebalanceo. En todos los casos, los datos se dividieron en un 80\% para entrenamiento y 20\% para validación, manteniendo la proporción de clases mediante muestreo estratificado para los conjuntos desbalanceados. 
 
-\vspace{0.3cm}
-\noindent \textbf{Conjunto de datos y preprocesamiento.} \\
-Se utilizaron tres conjuntos de datos: uno balanceado para entrenamiento y prueba, y otro desbalanceado para evaluar distintas estrategias de rebalanceo. En todos los casos, los datos se dividieron en un 80\% para entrenamiento y 20\% para validación, manteniendo la proporción de clases mediante muestreo estratificado para los conjuntos desbalanceados. 
-
 El preprocesamiento se realizó en varias etapas secuenciales:
 
 \begin{enumerate}
     \item \textbf{Aplicación de límites a variables}: Se establecieron umbrales específicos para cada variable basados en su significado biológico, reemplazando con NaN los valores fuera de rango. Esto permitió eliminar mediciones físicamente imposibles o biológicamente implausibles que podrían representar errores de medición.
     
-    \item \textbf{Detección y tratamiento de outliers}: Se implementó una técnica de dos pasos: primero, un algoritmo K-means (k=2) agrupó los valores de cada característica para identificar diferentes poblaciones celulares; luego, dentro de cada cluster se aplicó el método del rango intercuartílico (IQR), marcando como outliers los puntos que caían fuera de $Q1 - 1.5 \times IQR$ o $Q3 + 1.5 \times IQR$. Este enfoque permitió preservar las diferencias naturales entre poblaciones celulares mientras se identificaban valores extremos dentro de cada grupo.
+    \item \textbf{Detección y tratamiento de outliers}: Se utilizó el método del rango intercuartílico (IQR), marcando como outliers los puntos que caían fuera de $Q1 - 1.5 \times IQR$ o $Q3 + 1.5 \times IQR$. Se utilizaron los percentiles 15 y 85 para los cálculos de Q1 y Q3, respectivamente, adaptando así el criterio a la distribución de los datos.
     
-    \item \textbf{Imputación de valores faltantes}: Los valores NaN resultantes de pasos anteriores y los originalmente faltantes fueron imputados mediante el algoritmo de k vecinos más cercanos (k-NN) con k=5. Para cada valor faltante, se identificaron los 5 registros más similares considerando las demás características disponibles, y se imputó la media de los valores correspondientes. Este método preserva mejor las relaciones entre variables que la imputación por media o mediana global.
+    \item \textbf{Imputación de valores faltantes}: Los valores NaN resultantes de pasos anteriores y los originalmente faltantes fueron imputados mediante la media de cada característica calculada a partir del conjunto de entrenamiento. 
     
     \item \textbf{Normalización estándar}: Todas las variables numéricas fueron normalizadas restando la media y dividiendo por la desviación estándar (z-score), resultando en distribuciones con media 0 y desviación estándar 1. Esta transformación fue crucial para el modelo de regresión logística, que es sensible a la escala de las variables de entrada.
 \end{enumerate}
 
 Para las variables categóricas, se realizaron transformaciones específicas: la variable CellType (con valores 'Epithelial' y 'Mesenchymal') se codificó mediante one-hot encoding, generando dos variables binarias Epthlial y Mesnchymal; mientras que GeneticMutation (con valores 'Present' y 'Absent') se transformó directamente en una variable binaria numérica.
 
-Las características categóricas como 'CellType' fueron transformadas mediante codificación one-hot, resultando en variables binarias como 'Epthlial' y 'Mesnchymal', mientras que 'GeneticMutation' fue convertida directamente a una variable binaria.
-
 \vspace{0.3cm}
 \noindent \textbf{Selección de hiperparámetros.} \\
-El valor del hiperparámetro de regularización $\lambda$ se seleccionó utilizando búsqueda en grilla sobre el conjunto de validación, evaluando múltiples valores logarítmicamente espaciados entre $10^{-1}$ y $10^4$. Se seleccionó el modelo con mejor F1-score en el conjunto de validación, resultando en un valor óptimo de $\lambda = 0.1$.
+El valor del hiperparámetro de regularización $\lambda$ se seleccionó utilizando búsqueda en grilla sobre el conjunto de validación, evaluando múltiples valores logarítmicamente espaciados entre $10^{-5}$ y $10^1$. Se seleccionó el modelo con mejor F1-score en el conjunto de validación, resultando en un valor óptimo de $\lambda = 0.1$.
 
 \vspace{0.3cm}
 \noindent \textbf{Estrategias de rebalanceo.} \\
@@ -79,9 +73,9 @@ El modelo de regresión logística con regularización L2 mostró un rendimiento
 
 \subsubsection{Análisis Exploratorio}
 
-El conjunto de datos contiene características morfológicas, bioquímicas y genéticas de células provenientes de muestras de tejido mamario. El análisis exploratorio reveló que algunas características como el tamaño celular, la tasa de mitosis y la densidad nuclear mostraban distribuciones bimodales, lo que sugiere la presencia de heterogeneidad en la población celular estudiada.
+El conjunto de datos contiene características morfológicas, bioquímicas y genéticas de células provenientes de muestras de tejido mamario. El análisis exploratorio reveló que algunas características como el tamaño celular, la tasa de mitosis y la densidad nuclear mostraban distribuciones bimodales. De estos grupos, el menos numeroso no coincidia con los tamanos habituales de las celulas (ni benignas, ni malignas), es por esto que se sacaron del dataset.
 
-Las correlaciones entre variables mostraron asociaciones interesantes: se observó una correlación positiva entre la tasa de mitosis y el tamaño celular, mientras que la adhesión celular mostró correlación negativa con estos parámetros. Estos patrones de correlación ayudaron a guiar el preprocesamiento de datos y la posterior interpretación de los resultados del modelo.
+Las correlaciones entre variables mostraron asociaciones interesantes: se observó una correlación positiva entre la tasa de mitosis y el tamaño celular, mientras que la adhesión celular mostró correlación negativa con estos parámetros.
 
 \subsubsection{Datos Balanceados}
 
@@ -89,7 +83,7 @@ Utilizando el conjunto balanceado, el modelo de regresión logística alcanzó u
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\textwidth]{figuras/confusion_matrix_balanced.png}
+    \includegraphics[width=0.5\textwidth]{figuras/confusion_matrix_balanced.png}
     \caption{Matriz de confusión para el modelo entrenado con datos balanceados. Se observa un buen equilibrio entre falsos positivos (9) y falsos negativos (5).}
     \label{fig:confusion_matrix_balanced}
 \end{figure}
@@ -166,26 +160,3 @@ Para implementación en un entorno real, recomendaríamos específicamente el mo
     \item Su robustez ante datos desbalanceados, característica común en escenarios clínicos reales donde las muestras benignas suelen predominar.
     \item La interpretabilidad de sus coeficientes, que permite a los profesionales médicos comprender qué características influyen en la predicción.
 \end{itemize}
-
-\subsubsection{Limitaciones y Trabajo Futuro}
-
-A pesar de los prometedores resultados, el trabajo presenta algunas limitaciones que podrían abordarse en investigaciones futuras:
-
-\begin{itemize}
-    \item \textbf{Limitación en la captura de heterogeneidad tumoral}: El modelo actual no contempla la variabilidad intramuestra que puede existir en tumores heterogéneos. Una mejora sería incorporar características que capten esta heterogeneidad o implementar modelos jerárquicos que consideren múltiples regiones de la misma muestra.
-    
-    \item \textbf{Información contextual limitada}: No se incluyeron datos clínicos como edad, antecedentes familiares o información de imagen radiológica, que podrían enriquecer el diagnóstico. Integrar esta información en un modelo multimodal podría mejorar la precisión diagnóstica.
-    
-    \item \textbf{Falta de validación externa}: El modelo fue validado en conjuntos procedentes de la misma distribución estadística. La validación en datos de diferentes centros o con equipos de medición distintos sería necesaria para asegurar su generalización.
-    
-    \item \textbf{Binariedad del diagnóstico}: El enfoque actual se limita a clasificación binaria, mientras que en la práctica clínica existen categorías intermedias (como hiperplasia atípica o carcinoma in situ). Un modelo futuro podría incorporar clasificación multiclase para estos estados intermedios.
-\end{itemize}
-
-Como líneas de trabajo futuro, proponemos:
-
-\begin{enumerate}
-    \item Explorar arquitecturas más complejas como ensambles o modelos profundos que puedan capturar relaciones no lineales entre características.
-    \item Desarrollar un sistema de explicabilidad que genere justificaciones automáticas de las predicciones, señalando qué características específicas llevaron a un diagnóstico particular.
-    \item Implementar un sistema de aprendizaje continuo que pueda actualizarse con nuevos datos validados por patólogos, mejorando progresivamente su precisión.
-    \item Extender el modelo para la predicción de subtipo molecular y agresividad tumoral, aspectos cruciales para el pronóstico y selección de tratamiento.
-\end{enumerate}

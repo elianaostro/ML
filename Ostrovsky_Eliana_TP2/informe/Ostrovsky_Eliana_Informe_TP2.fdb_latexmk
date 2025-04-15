@@ -1,7 +1,7 @@
 # Fdb version 3
-["pdflatex"] 1744654483 "/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/Ostrovsky_Eliana_Informe_TP2.tex" "Ostrovsky_Eliana_Informe_TP2.pdf" "Ostrovsky_Eliana_Informe_TP2" 1744654484
+["pdflatex"] 1744685998 "/home/elianaostro/Documents/ML/informe/Ostrovsky_Eliana_Informe_TP2.tex" "Ostrovsky_Eliana_Informe_TP2.pdf" "Ostrovsky_Eliana_Informe_TP2" 1744685998
   "/etc/texmf/web2c/texmf.cnf" 1716483461 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP2/informe/Ostrovsky_Eliana_Informe_TP2.tex" 1744654270 1066 0de68fa1ae2a700f16c2b77498523999 ""
+  "/home/elianaostro/Documents/ML/informe/Ostrovsky_Eliana_Informe_TP2.tex" 1744684031 1066 0de68fa1ae2a700f16c2b77498523999 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy6.tfm" 1246382020 1124 14ccf5552bc7f77ca02a8a402bea8bfb ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmbsy8.tfm" 1246382020 1120 200be8b775682cdf80acad4be5ef57e4 ""
@@ -117,14 +117,14 @@
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1716483465 128028 f533b797fba58d231669ea19e894e23e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1716483989 1427367 d1e13261a4a98e6d2bc2ff852a46fd89 ""
   "Logo-Udesa.jpg" 1744647442 20357 ff5dcc44a74333284f3be3965cb51fc3 ""
-  "Ostrovsky_Eliana_Informe_TP2.aux" 1744654484 5102 2df6eff52f4f51421f83655a0a9b4bbc "pdflatex"
-  "Ostrovsky_Eliana_Informe_TP2.out" 1744654484 2689 c7fde9b58b0a1fbb8012dea63b18f523 "pdflatex"
-  "Ostrovsky_Eliana_Informe_TP2.tex" 1744654270 1066 0de68fa1ae2a700f16c2b77498523999 ""
-  "figuras/confusion_matrices.png" 1744647983 45149 9c518e3a71ad19f9eb8caa5a07beacf2 ""
+  "Ostrovsky_Eliana_Informe_TP2.aux" 1744685998 5084 06af155f9b6482d81f638d6ff0332b21 "pdflatex"
+  "Ostrovsky_Eliana_Informe_TP2.out" 1744685998 2654 9152e93f796b9c54f6775926dc1b1b9b "pdflatex"
+  "Ostrovsky_Eliana_Informe_TP2.tex" 1744684031 1066 0de68fa1ae2a700f16c2b77498523999 ""
+  "figuras/confusion_matrices.png" 1744685890 44544 29ba81187609edb3f17f12a6ceba7c73 ""
   "figuras/confusion_matrix_balanced.png" 1744647087 18622 360a9cd20f4ec0b87f78b99d019ce9b7 ""
   "figuras/roc_pr_curves.png" 1744647071 58141 cf83fb8a2d6f9be1b7bc84f02d362cc9 ""
-  "problema1.tex" 1744654482 19362 50d81fffd053462654cada7bc049753b ""
-  "problema2.tex" 1744653149 10865 65c112a710fe3bb7c2bf3347cfdf2741 ""
+  "problema1.tex" 1744683813 15942 b4dd0d3ba13023d4b6650a7811c675f9 ""
+  "problema2.tex" 1744685998 12256 8a927ba7cca54439014fd2520629c2f7 ""
   (generated)
   "Ostrovsky_Eliana_Informe_TP2.aux"
   "Ostrovsky_Eliana_Informe_TP2.log"

@@ -103,23 +103,18 @@ def grid_search_cv(model_class, param_configs, X_train, y_train, X_val=None, y_v
         print(f"Métrica a optimizar: {metric_name}")
         print("-" * 60)
 
-    # Preparar folds de CV una sola vez
     cv_folds = create_stratified_k_folds(X_train, y_train, k=n_folds, random_state=random_seed)
 
-    # Variables para seguimiento
     best_avg_score = -1
     best_params = None
     results = []
 
-    # Bucle principal de evaluación de configuraciones
     for i, params in enumerate(param_configs):
         if verbose:
             print(f"\nConfig [{i+1}/{len(param_configs)}]: {params}")
         
-        # Evaluación en cada fold
         fold_scores = []
         for fold_idx, (train_idx, val_idx) in enumerate(cv_folds):
-            # Obtener datos para este fold
             if isinstance(X_train, pd.DataFrame):
                 X_train_fold, y_train_fold = X_train.iloc[train_idx], y_train[train_idx]
                 X_val_fold, y_val_fold = X_train.iloc[val_idx], y_train[val_idx]
@@ -127,45 +122,36 @@ def grid_search_cv(model_class, param_configs, X_train, y_train, X_val=None, y_v
                 X_train_fold, y_train_fold = X_train[train_idx], y_train[train_idx]
                 X_val_fold, y_val_fold = X_train[val_idx], y_train[val_idx]
             
-            # Aplicar preprocesamiento si se proporcionó una función
             if preprocess_fn is not None:
                 X_train_fold, X_val_fold = preprocess_fn(X_train_fold, X_val_fold, preprocess_info)
             
-            # Entrenar modelo con la configuración actual
             model = model_class(**params)
-            model.fit(X_train_fold, y_train_fold)
+            model.fit(X_train_fold.values, y_train_fold)
             
-            # Evaluar en fold de validación
-            y_pred_fold = model.predict(X_val_fold)
+            y_pred_fold = model.predict(X_val_fold.values)
             
-            # Calcular métrica (manejando diferentes tipos)
             if hasattr(model, 'predict_proba') and metric_name in ['auc_roc', 'auc_pr', 'f1_score']:
                 try:
-                    y_pred_proba_fold = model.predict_proba(X_val_fold)
+                    y_pred_proba_fold = model.predict_proba(X_val_fold.values)
                     metrics = calculate_metrics(y_val_fold, y_pred_fold, y_pred_proba_fold)
                     score = metrics[metric_name]
                 except:
-                    # Si no se puede calcular con probabilidades, usar versión básica
                     if metric_name == 'f1_score':
                         score = f1_score(y_val_fold, y_pred_fold, average='weighted', zero_division=0)
                     elif metric_name == 'accuracy':
                         score = accuracy_score(y_val_fold, y_pred_fold)
                     else:
-                        # Para otras métricas, usar F1 como fallback
                         score = f1_score(y_val_fold, y_pred_fold, average='weighted', zero_division=0)
             else:
-                # Para modelos sin predict_proba o métricas simples
                 if metric_name == 'f1_score':
                     score = f1_score(y_val_fold, y_pred_fold, average='weighted', zero_division=0)
                 elif metric_name == 'accuracy':
                     score = accuracy_score(y_val_fold, y_pred_fold)
                 else:
-                    # Para otras métricas, usar F1 como fallback
                     score = f1_score(y_val_fold, y_pred_fold, average='weighted', zero_division=0)
             
             fold_scores.append(score)
         
-        # Calcular y almacenar resultados de esta configuración
         avg_score = np.mean(fold_scores)
         std_score = np.std(fold_scores)
         results.append({
@@ -178,51 +164,29 @@ def grid_search_cv(model_class, param_configs, X_train, y_train, X_val=None, y_v
         if verbose:
             print(f" Score: {avg_score:.4f} ± {std_score:.4f}")
         
-        # Actualizar mejor configuración si corresponde
         if avg_score > best_avg_score:
             best_avg_score = avg_score
             best_params = params
             if verbose:
                 print(f" ¡Nueva mejor configuración encontrada!")
 
-    # Ordenar resultados por puntuación promedio (descendente)
     sorted_results = sorted(results, key=lambda x: x['avg_score'], reverse=True)
 
     if verbose:
-        # Mostrar resultados finales
         print("\n" + "="*60)
         print("RESULTADOS DE LA BÚSQUEDA DE HIPERPARÁMETROS")
         print("="*60)
         print(f"Mejor configuración: {best_params}")
         print(f"Mejor score ({metric_name}): {best_avg_score:.4f}")
-        
-        # Mostrar top 3 configuraciones
-        print("\nTop 3 configuraciones:")
-        for i, res in enumerate(sorted_results[:3]):
-            print(f"{i+1}. Score: {res['avg_score']:.4f} ± {res['std_score']:.4f} | Params: {res['params']}")
-        
-        # Visualización simple de resultados
-        plt.figure(figsize=(10, 6))
-        scores = [r['avg_score'] for r in sorted_results]
-        plt.plot(range(len(scores)), scores, 'o-')
-        plt.xlabel('Configuración (ordenada por rendimiento)')
-        plt.ylabel(f'Score ({metric_name})')
-        plt.title('Rendimiento de las configuraciones evaluadas')
-        plt.grid(True)
-        plt.tight_layout()
-        plt.show()
 
-    # Preprocesar datos completos si hay función de preprocesamiento
     if preprocess_fn is not None and X_val is not None:
         X_train_processed, X_val_processed = preprocess_fn(X_train, X_val)
     else:
         X_train_processed, X_val_processed = X_train, X_val
 
-    # Entrenar el modelo final con los mejores parámetros
     best_model = model_class(**best_params)
     best_model.fit(X_train_processed, y_train)
 
-    # Evaluar en conjunto de validación separado si se proporciona
     if X_val_processed is not None and y_val is not None:
         y_val_pred = best_model.predict(X_val_processed)
         
@@ -242,7 +206,6 @@ def grid_search_cv(model_class, param_configs, X_train, y_train, X_val=None, y_v
                     if 'auc_pr' in val_metrics:
                         print(f"AUC-PR: {val_metrics['auc_pr']:.4f}")
             except:
-                # Si predict_proba falla, mostrar métricas básicas
                 if verbose:
                     acc = accuracy_score(y_val, y_val_pred)
                     f1 = f1_score(y_val, y_val_pred, average='weighted', zero_division=0)
@@ -250,7 +213,6 @@ def grid_search_cv(model_class, param_configs, X_train, y_train, X_val=None, y_v
                     print(f"Accuracy: {acc:.4f}")
                     print(f"F1-Score: {f1:.4f}")
         else:
-            # Para modelos sin predict_proba
             if verbose:
                 acc = accuracy_score(y_val, y_val_pred)
                 f1 = f1_score(y_val, y_val_pred, average='weighted', zero_division=0)
