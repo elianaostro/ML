@@ -1,7 +1,7 @@
 # Fdb version 3
-["pdflatex"] 1746453637 "/home/elianaostro/Documents/ML/ML/Trabajo Práctico 3/informe/Ostrovsky_Eliana_Informe_TP3.pdf.tex" "Ostrovsky_Eliana_Informe_TP3.pdf.pdf" "Ostrovsky_Eliana_Informe_TP3.pdf" 1746453637
+["pdflatex"] 1746453787 "/home/elianaostro/Documents/ML/ML/Trabajo Práctico 3/informe/Ostrovsky_Eliana_Informe_TP3.pdf.tex" "Ostrovsky_Eliana_Informe_TP3.pdf.pdf" "Ostrovsky_Eliana_Informe_TP3.pdf" 1746453787
   "/etc/texmf/web2c/texmf.cnf" 1716483461 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/elianaostro/Documents/ML/ML/Trabajo Práctico 3/informe/Ostrovsky_Eliana_Informe_TP3.pdf.tex" 1746453595 2853 58ee8425104cf94eb15578b40315c5a9 ""
+  "/home/elianaostro/Documents/ML/ML/Trabajo Práctico 3/informe/Ostrovsky_Eliana_Informe_TP3.pdf.tex" 1746453761 2853 58ee8425104cf94eb15578b40315c5a9 ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex7.tfm" 1246382020 1004 54797486969f23fa377b128694d548df ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/cmextra/cmex8.tfm" 1246382020 988 bdf658c3bfc2d96d3c8b02cfc1c94c20 ""
@@ -20,7 +20,6 @@
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmsy6.tfm" 1136768653 1116 933a60c408fc0a863a92debe84b2d294 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmsy8.tfm" 1136768653 1120 8b7d695260f3cff42e636090a8002094 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmti10.tfm" 1136768653 1480 aa8e34af0eb6a2941b776984cf1dfdc4 ""
-  "/usr/share/texlive/texmf-dist/fonts/tfm/public/cm/cmtt10.tfm" 1136768653 768 1321e9409b4137d6fb428ac9dc956269 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb" 1248133631 34811 78b52f49e893bcba91bd7581cdc144c0 ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb" 1248133631 32080 340ef9bf63678554ee606688e7b5339d ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb" 1248133631 35752 024fb6c41858982481f6968b5fc26508 ""
@@ -28,7 +27,6 @@
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb" 1248133631 32362 179c33bbf43f19adbb3825bb4e36e57a ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb" 1248133631 32569 5e5ddc8df908dea60932f3c484a54c0d ""
   "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb" 1248133631 37944 359e864bd06cde3b1cf57bb20757fb06 ""
-  "/usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb" 1248133631 31099 c85edf1dd5b9e826d67c9c7293b6786c ""
   "/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1461363279 71627 94eb9990bed73c364d7f53f960cc8c5b ""
   "/usr/share/texlive/texmf-dist/tex/generic/atbegshi/atbegshi.sty" 1575674566 24708 5584a51a7101caf7e6bbf1fc27d8f7b1 ""
   "/usr/share/texlive/texmf-dist/tex/generic/babel-spanish/spanish.ldf" 1622145181 26965 3b6d1655ad716f98e788b1fb9f2e87b8 ""
@@ -88,10 +86,10 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1644012257 39432 7155514e09a3d69036fac785183a21c2 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1716483465 128028 f533b797fba58d231669ea19e894e23e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1716483989 1427367 d1e13261a4a98e6d2bc2ff852a46fd89 ""
-  "Logo-Udesa.jpg" 0 -1 0 ""
-  "Ostrovsky_Eliana_Informe_TP3.pdf.aux" 1746453637 32 3985256e7290058c681f74d7a3565a19 "pdflatex"
-  "Ostrovsky_Eliana_Informe_TP3.pdf.out" 0 -1 0 "pdflatex"
-  "Ostrovsky_Eliana_Informe_TP3.pdf.tex" 1746453595 2853 58ee8425104cf94eb15578b40315c5a9 ""
+  "Logo-Udesa.jpg" 1746453686 20357 ff5dcc44a74333284f3be3965cb51fc3 ""
+  "Ostrovsky_Eliana_Informe_TP3.pdf.aux" 1746453787 1170 6c78a2cd286d9b5a3211b1085ae049c9 "pdflatex"
+  "Ostrovsky_Eliana_Informe_TP3.pdf.out" 1746453787 280 85cdd1b931b558d0169ed601b966cebc "pdflatex"
+  "Ostrovsky_Eliana_Informe_TP3.pdf.tex" 1746453761 2853 58ee8425104cf94eb15578b40315c5a9 ""
   (generated)
   "Ostrovsky_Eliana_Informe_TP3.pdf.aux"
   "Ostrovsky_Eliana_Informe_TP3.pdf.log"
