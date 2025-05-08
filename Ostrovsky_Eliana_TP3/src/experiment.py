@@ -1,0 +1,153 @@
+# src/experiment.py
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Dict, List, Any, Tuple
+import time
+
+def run_experiments(X_train: np.ndarray, y_train: np.ndarray, 
+                    X_val: np.ndarray, y_val: np.ndarray,
+                    neural_network_class, layer_sizes: List[int],
+                    experiments: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Run experiments with different neural network configurations.
+    
+    Args:
+        X_train: Training data.
+        y_train: Training labels.
+        X_val: Validation data.
+        y_val: Validation labels.
+        neural_network_class: Class of neural network to use.
+        layer_sizes: Layer sizes for the network.
+        experiments: List of experiment configurations.
+        
+    Returns:
+        List of experiment results.
+    """
+    results = []
+    
+    for exp in experiments:
+        print(f"\n{'='*50}")
+        print(f"Running experiment: {exp['name']}")
+        print(f"{'='*50}")
+        
+        # Initialize the model with experiment parameters
+        model_params = {k: v for k, v in exp.items() if k not in ['name', 'epochs', 'batch_size', 'optimizer', 
+                                                                 'lr_schedule', 'early_stopping_patience']}
+        model = neural_network_class(layer_sizes=layer_sizes, **model_params)
+        
+        # Train the model with experiment parameters
+        train_params = {k: v for k, v in exp.items() if k in ['epochs', 'batch_size', 'optimizer', 
+                                                             'lr_schedule', 'early_stopping_patience']}
+        history = model.train(X_train, y_train, X_val, y_val, **train_params)
+        
+        # Evaluate the model
+        y_pred_train = model.forward(X_train, training=False)
+        train_loss = model.cross_entropy_loss(y_train, y_pred_train)
+        train_accuracy = model.accuracy(y_train, y_pred_train)
+        
+        y_pred_val = model.forward(X_val, training=False)
+        val_loss = model.cross_entropy_loss(y_val, y_pred_val)
+        val_accuracy = model.accuracy(y_val, y_pred_val)
+        
+        # Store results
+        exp_result = exp.copy()
+        exp_result.update({
+            'model': model,
+            'history': history,
+            'final_train_loss': train_loss,
+            'final_train_accuracy': train_accuracy,
+            'final_val_loss': val_loss,
+            'final_val_accuracy': val_accuracy,
+            'training_time': history['training_time']
+        })
+        
+        print(f"\nResults for {exp['name']}:")
+        print(f"Training time: {history['training_time']:.2f} seconds")
+        print(f"Final train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f}")
+        print(f"Final val loss: {val_loss:.4f}, val accuracy: {val_accuracy:.4f}")
+        
+        results.append(exp_result)
+    
+    return results
+
+def plot_experiment_results(results: List[Dict[str, Any]], metric: str = 'val_accuracy') -> None:
+    """
+    Plot experiment results for comparison.
+    
+    Args:
+        results: List of experiment results.
+        metric: Metric to compare ('val_accuracy', 'val_loss', 'train_accuracy', 'train_loss').
+    """
+    plt.figure(figsize=(12, 8))
+    
+    for res in results:
+        if metric in res['history']:
+            plt.plot(res['history'][metric], label=res['name'])
+    
+    plt.title(f"Comparison of {metric.replace('_', ' ').title()}")
+    plt.xlabel('Epoch')
+    plt.ylabel(metric.replace('_', ' ').title())
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def compare_training_times(results: List[Dict[str, Any]]) -> None:
+    """
+    Plot training times for different experiments.
+    
+    Args:
+        results: List of experiment results.
+    """
+    names = [res['name'] for res in results]
+    times = [res['training_time'] for res in results]
+    
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(names, times)
+    
+    # Add time values on top of bars
+    for bar, time_val in zip(bars, times):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
+                f"{time_val:.2f}s", ha='center')
+    
+    plt.title('Training Time Comparison')
+    plt.xlabel('Experiment')
+    plt.ylabel('Time (seconds)')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
+def compare_final_metrics(results: List[Dict[str, Any]]) -> None:
+    """
+    Plot final metrics for different experiments.
+    
+    Args:
+        results: List of experiment results.
+    """
+    names = [res['name'] for res in results]
+    train_acc = [res['final_train_accuracy'] for res in results]
+    val_acc = [res['final_val_accuracy'] for res in results]
+    
+    x = np.arange(len(names))
+    width = 0.35
+    
+    plt.figure(figsize=(12, 6))
+    bars1 = plt.bar(x - width/2, train_acc, width, label='Train Accuracy')
+    bars2 = plt.bar(x + width/2, val_acc, width, label='Validation Accuracy')
+    
+    # Add values on top of bars
+    for bar, val in zip(bars1, train_acc):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                f"{val:.3f}", ha='center', fontsize=8)
+    
+    for bar, val in zip(bars2, val_acc):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                f"{val:.3f}", ha='center', fontsize=8)
+    
+    plt.title('Final Accuracy Comparison')
+    plt.xlabel('Experiment')
+    plt.ylabel('Accuracy')
+    plt.xticks(x, names, rotation=45, ha='right')
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
