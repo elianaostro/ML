@@ -57,7 +57,7 @@ def generate_predictions(model: Any, X_comp: np.ndarray, output_size: int,
     return filename
 
 # Main execution for notebook
-def run_challenge(best_model, X_train, y_train, apellido="Apellido", nombre="Nombre"):
+def run_challenge(best_model, X_train, y_train, apellido="Ostrovsky", nombre="Eliana"):
     """
     Run the challenge prediction process.
     

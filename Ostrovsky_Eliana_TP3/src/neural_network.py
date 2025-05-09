@@ -356,3 +356,20 @@ class NeuralNetwork:
             conf_matrix[y_true[i], y_pred[i]] += 1
             
         return conf_matrix
+    
+    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Tuple[float, np.ndarray]:
+        """
+        Evaluate the model on a dataset.
+        
+        Args:
+            X: Input data of shape (n_samples, input_size).
+            y: True labels (indices) of shape (n_samples,).
+            
+        Returns:
+            Tuple containing accuracy and confusion matrix.
+        """
+        y_pred = self.predict(X)
+        loss = self.cross_entropy_loss(y, y_pred)
+        acc = self.accuracy(y, y_pred)
+        
+        return loss, acc

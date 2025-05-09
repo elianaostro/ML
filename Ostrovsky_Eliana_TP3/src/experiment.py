@@ -60,7 +60,7 @@ def run_experiments(X_train: np.ndarray, y_train: np.ndarray,
             'final_val_accuracy': val_accuracy,
             'training_time': history['training_time']
         })
-        
+
         print(f"\nResults for {exp['name']}:")
         print(f"Training time: {history['training_time']:.2f} seconds")
         print(f"Final train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f}")
@@ -91,6 +91,70 @@ def plot_experiment_results(results: List[Dict[str, Any]], metric: str = 'val_ac
     plt.grid(True, linestyle='--', alpha=0.7)
     plt.tight_layout()
     plt.show()
+
+def run_architecture_experiments(architectures, cofiguration, ImprovedNeuralNetwork, 
+                                 X_train, y_train, X_val, y_val):
+    """
+    Run experiments with different neural network architectures.
+
+    Parameters:
+    - architectures (list): List of dicts, each with 'name' and 'layer_sizes' keys.
+    - cofiguration (dict): configuration dictionary.
+    - ImprovedNeuralNetwork (class): Class of the neural network to instantiate.
+    - X_train, y_train: Training data and labels.
+    - X_val, y_val: Validation data and labels.
+
+    Returns:
+    - architecture_results (list): List of dictionaries with results for each architecture.
+    """
+    architecture_results = []
+
+    for arch in architectures:
+        print(f"\n{'='*50}")
+        print(f"Testing architecture: {arch['name']}")
+        print(f"{'='*50}")
+
+        config = {k: v for k, v in cofiguration.items() if k not in ['name', 'model', 'history', 'final_train_loss', 
+                                                                    'final_train_accuracy', 'final_val_loss', 
+                                                                    'final_val_accuracy', 'training_time']}
+        config['name'] = arch['name']
+
+        model = ImprovedNeuralNetwork(layer_sizes=arch['layer_sizes'], **{k: v for k, v in config.items() 
+                                                                          if k not in ['name', 'epochs', 'batch_size', 
+                                                                                     'optimizer', 'lr_schedule', 
+                                                                                     'early_stopping_patience']})
+
+        train_params = {k: v for k, v in config.items() if k in ['epochs', 'batch_size', 'optimizer', 
+                                                                  'lr_schedule', 'early_stopping_patience']}
+        history = model.train(X_train, y_train, X_val, y_val, **train_params)
+
+        y_pred_train = model.forward(X_train, training=False)
+        train_loss = model.cross_entropy_loss(y_train, y_pred_train)
+        train_accuracy = model.accuracy(y_train, y_pred_train)
+
+        y_pred_val = model.forward(X_val, training=False)
+        val_loss = model.cross_entropy_loss(y_val, y_pred_val)
+        val_accuracy = model.accuracy(y_val, y_pred_val)
+
+        arch_result = arch.copy()
+        arch_result.update({
+            'model': model,
+            'history': history,
+            'final_train_loss': train_loss,
+            'final_train_accuracy': train_accuracy,
+            'final_val_loss': val_loss,
+            'final_val_accuracy': val_accuracy,
+            'training_time': history['training_time']
+        })
+
+        print(f"\nResults for {arch['name']}:")
+        print(f"Training time: {history['training_time']:.2f} seconds")
+        print(f"Final train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f}")
+        print(f"Final val loss: {val_loss:.4f}, val accuracy: {val_accuracy:.4f}")
+
+        architecture_results.append(arch_result)
+    
+    return architecture_results
 
 def compare_training_times(results: List[Dict[str, Any]]) -> None:
     """

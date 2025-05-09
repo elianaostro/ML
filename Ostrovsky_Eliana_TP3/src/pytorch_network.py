@@ -54,7 +54,7 @@ class PyTorchNetwork(nn.Module):
     
     def forward(self, x):
         """Forward pass through the network."""
-        return self.model(x)
+        return self.model(torch.FloatTensor(x))
     
     def train_model(self, X_train: np.ndarray, y_train: np.ndarray, 
                    X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None,

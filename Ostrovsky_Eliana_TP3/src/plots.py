@@ -1,3 +1,4 @@
+from typing import Optional, Tuple
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import Counter
@@ -162,37 +163,39 @@ def analyze_image_complexity(X, y):
     print(f"Least complex class: {complexity_by_class[-1][0]} with variance {complexity_by_class[-1][1]:.4f}")
 
 # 5. Visualizar ejemplos de cada clase en una cuadrícula
-def plot_examples_by_class(X, y, examples_per_class=5):
+def visualize_samples(X: np.ndarray, y: np.ndarray, num_samples: int = 5, 
+                     num_classes: Optional[int] = None, figsize: Tuple[int, int] = (15, 15)) -> None:
     """
-    Plots multiple examples for each class in a grid.
+    Visualize random samples from each class.
     
     Args:
-        X (np.ndarray): Array of images
-        y (np.ndarray): Array of labels
-        examples_per_class (int): Number of examples to show per class
+        X: Array of images.
+        y: Array of labels.
+        num_samples: Number of samples to display per class.
+        num_classes: Number of classes to display. If None, display all.
+        figsize: Figure size (width, height) in inches.
     """
     classes = np.unique(y)
-    num_classes_to_show = min(10, len(classes))  # Limit to 10 classes for readability
+    if num_classes is not None:
+        classes = classes[:num_classes]
     
-    plt.figure(figsize=(15, 2 * num_classes_to_show))
-    
-    for i, cls in enumerate(classes[:num_classes_to_show]):
-        # Get images for this class
+    plt.figure(figsize=figsize)
+    for i, cls in enumerate(classes):
+        # Get indices for this class
         indices = np.where(y == cls)[0]
         
-        # Select random examples
-        if len(indices) >= examples_per_class:
-            selected_indices = np.random.choice(indices, examples_per_class, replace=False)
+        # Select random samples
+        if len(indices) >= num_samples:
+            selected_indices = np.random.choice(indices, num_samples, replace=False)
         else:
             selected_indices = indices
         
-        # Plot examples
+        # Plot samples
         for j, idx in enumerate(selected_indices):
-            plt.subplot(num_classes_to_show, examples_per_class, i * examples_per_class + j + 1)
+            plt.subplot(len(classes), num_samples, i * num_samples + j + 1)
             plt.imshow(X[idx].reshape(28, 28), cmap='gray')
             plt.axis('off')
-            
-            if j == 0:  # Add class label to the first example
+            if j == 0:  # Add class label to the first image
                 plt.title(f'Class {cls}')
     
     plt.tight_layout()

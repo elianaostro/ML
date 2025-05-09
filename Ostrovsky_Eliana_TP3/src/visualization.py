@@ -74,40 +74,47 @@ def plot_confusion_matrix(confusion_matrix: np.ndarray, figsize: Tuple[int, int]
     plt.tight_layout()
     plt.show()
 
-def visualize_samples(X: np.ndarray, y: np.ndarray, num_samples: int = 5, 
-                     num_classes: Optional[int] = None, figsize: Tuple[int, int] = (15, 10)) -> None:
+def plot_class_examples(X_images, y_images, figsize=(13, 15), suptitle="Examples of each character class"):
     """
-    Visualize random samples from each class.
+    Plot one example of each class in the dataset.
     
-    Args:
-        X: Array of images.
-        y: Array of labels.
-        num_samples: Number of samples to display per class.
-        num_classes: Number of classes to display. If None, display all.
-        figsize: Figure size (width, height) in inches.
+    Parameters:
+    -----------
+    X_images : numpy.ndarray
+        The image data, shape (n_samples, n_features)
+    y_images : numpy.ndarray
+        The labels, shape (n_samples,)
+    figsize : tuple, optional
+        Figure size, default (13, 15)
+    suptitle : str, optional
+        Title for the entire figure
     """
-    classes = np.unique(y)
-    if num_classes is not None:
-        classes = classes[:num_classes]
-    
-    plt.figure(figsize=figsize)
-    for i, cls in enumerate(classes):
-        # Get indices for this class
-        indices = np.where(y == cls)[0]
+    unique_labels = np.unique(y_images)
+    num_classes = len(unique_labels)
+    selected_images = []
+    selected_labels = []
+
+    for label in unique_labels:
+        idx = np.where(y_images == label)[0][0]
+        selected_images.append(X_images[idx].reshape(28, 28))
+        selected_labels.append(label)
+
+    n_cols = int(np.sqrt(num_classes))  
+    n_rows = (num_classes + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize)
+    axes = axes.flatten()  
+
+    for i, (img, label) in enumerate(zip(selected_images, selected_labels)):
+        axes[i].imshow(img, cmap='gray')
+        axes[i].set_title(f"Class: {label}")
+        axes[i].axis('off')
+
+    for j in range(num_classes, len(axes)):
+        axes[j].axis('off')
         
-        # Select random samples
-        if len(indices) >= num_samples:
-            selected_indices = np.random.choice(indices, num_samples, replace=False)
-        else:
-            selected_indices = indices
-        
-        # Plot samples
-        for j, idx in enumerate(selected_indices):
-            plt.subplot(len(classes), num_samples, i * num_samples + j + 1)
-            plt.imshow(X[idx].reshape(28, 28), cmap='gray')
-            plt.axis('off')
-            if j == 0:  # Add class label to the first image
-                plt.title(f'Class {cls}')
-    
     plt.tight_layout()
+    plt.suptitle(suptitle, y=0.95, fontsize=18)
+    plt.subplots_adjust(top=0.92)
     plt.show()
+    

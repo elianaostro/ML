@@ -10,5 +10,6 @@
     "python.testing.unittestEnabled": true,
     "python.analysis.extraPaths": [
         "./Ostrovsky_Eliana_TP2/src"
-    ]
+    ],
+    "python.analysis.autoImportCompletions": true
 }
