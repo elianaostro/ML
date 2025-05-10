@@ -23,9 +23,7 @@ class NeuralNetwork:
         self.weights = []
         self.biases = []
         
-        # Initialize weights and biases
         for i in range(1, self.num_layers):
-            # He initialization for ReLU activation
             self.weights.append(np.random.randn(layer_sizes[i-1], layer_sizes[i]) * 
                                np.sqrt(2.0 / layer_sizes[i-1]))
             self.biases.append(np.zeros((1, layer_sizes[i])))
@@ -64,7 +62,6 @@ class NeuralNetwork:
         Returns:
             Output after applying softmax.
         """
-        # Shift values for numerical stability
         exp_Z = np.exp(Z - np.max(Z, axis=1, keepdims=True))
         return exp_Z / np.sum(exp_Z, axis=1, keepdims=True)
     
@@ -78,17 +75,15 @@ class NeuralNetwork:
         Returns:
             Output predictions of shape (n_samples, output_size).
         """
-        self.Z_values = []  # Pre-activation values
-        self.A_values = [X]  # Activation values, with input as first activation
-        
-        # Pass through hidden layers with ReLU activation
+        self.Z_values = []  
+        self.A_values = [X]  
+
         for i in range(self.num_layers - 2):
             Z = np.dot(self.A_values[-1], self.weights[i]) + self.biases[i]
             self.Z_values.append(Z)
             A = self.relu(Z)
             self.A_values.append(A)
         
-        # Output layer with softmax activation
         Z = np.dot(self.A_values[-1], self.weights[-1]) + self.biases[-1]
         self.Z_values.append(Z)
         A = self.softmax(Z)
@@ -109,14 +104,11 @@ class NeuralNetwork:
         """
         m = y_true.shape[0]
         
-        # Convert y_true to one-hot encoding
         y_true_one_hot = np.zeros((m, self.layer_sizes[-1]))
         y_true_one_hot[np.arange(m), y_true.astype(int)] = 1
         
-        # Add small epsilon to avoid log(0)
         y_pred = np.clip(y_pred, 1e-10, 1 - 1e-10)
         
-        # Calculate cross-entropy
         loss = -np.sum(y_true_one_hot * np.log(y_pred)) / m
         
         return loss
@@ -131,30 +123,21 @@ class NeuralNetwork:
         """
         m = X.shape[0]
         
-        # Convert y to one-hot encoding
         y_one_hot = np.zeros((m, self.layer_sizes[-1]))
         y_one_hot[np.arange(m), y.astype(int)] = 1
         
-        # Calculate initial error (delta) for output layer
-        # For softmax + cross-entropy, this simplifies to (A_L - y)
         delta = self.A_values[-1] - y_one_hot
         
-        # Backpropagate the error
         for l in range(self.num_layers - 2, -1, -1):
-            # Calculate gradients for weights and biases
             dW = np.dot(self.A_values[l].T, delta) / m
             db = np.sum(delta, axis=0, keepdims=True) / m
             
-            # Update weights and biases
             self.weights[l] -= self.learning_rate * dW
             self.biases[l] -= self.learning_rate * db
             
-            # Calculate delta for previous layer (if not the input layer)
             if l > 0:
                 delta = np.dot(delta, self.weights[l].T) * self.relu_derivative(self.Z_values[l-1])
     
-    # src/neural_network.py
-    # Método train para NeuralNetwork
     def train(self, X: np.ndarray, y: np.ndarray, X_val: np.ndarray = None, 
             y_val: np.ndarray = None, epochs: int = 100, batch_size: int = None,
             early_stopping_patience: int = None, verbose: int = 1) -> Dict[str, Any]:
@@ -177,7 +160,6 @@ class NeuralNetwork:
         import time
         from src.utils import update_progress_bar
         
-        # Initialize history dictionary
         history = {
             'train_loss': [],
             'val_loss': [],
@@ -189,7 +171,6 @@ class NeuralNetwork:
             'best_val_accuracy': 0.0
         }
         
-        # For early stopping
         best_val_loss = float('inf')
         patience_counter = 0
         best_weights = None
@@ -200,19 +181,14 @@ class NeuralNetwork:
         start_time = time.time()
         
         for epoch in range(epochs):
-            # Train for one epoch
             if batch_size is None:
-                # Full batch gradient descent
                 y_pred = self.forward(X)
                 self.backward(X, y)
             else:
-                # Mini-batch gradient descent
-                # Shuffle the data
                 indices = np.random.permutation(m)
                 X_shuffled = X[indices]
                 y_shuffled = y[indices]
                 
-                # Process mini-batches
                 total_batches = (m + batch_size - 1) // batch_size
                 for i in range(0, m, batch_size):
                     end = min(i + batch_size, m)
@@ -222,20 +198,17 @@ class NeuralNetwork:
                     self.forward(X_batch)
                     self.backward(X_batch, y_batch)
                     
-                    # Update batch progress if very verbose
                     if verbose == 2:
                         batch_idx = i // batch_size + 1
                         update_progress_bar(batch_idx, total_batches, 
                                         metrics={"epoch": epoch+1, "total_epochs": epochs})
             
-            # Calculate training metrics
             y_pred_train = self.forward(X)
             train_loss = self.cross_entropy_loss(y, y_pred_train)
             train_accuracy = self.accuracy(y, y_pred_train)
             history['train_loss'].append(train_loss)
             history['train_accuracy'].append(train_accuracy)
             
-            # Calculate validation metrics if data is provided
             val_loss = None
             val_accuracy = None
             if X_val is not None and y_val is not None:
@@ -245,7 +218,6 @@ class NeuralNetwork:
                 history['val_loss'].append(val_loss)
                 history['val_accuracy'].append(val_accuracy)
                 
-                # Update best performance
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     patience_counter = 0
@@ -254,13 +226,11 @@ class NeuralNetwork:
                     history['best_val_loss'] = val_loss
                     history['best_val_accuracy'] = val_accuracy
                     
-                    # Save best weights
                     best_weights = [w.copy() for w in self.weights]
                     best_biases = [b.copy() for b in self.biases]
                 else:
                     patience_counter += 1
             
-            # Update progress bar
             if verbose >= 1:
                 metrics = {
                     "train_loss": train_loss, 
@@ -274,25 +244,20 @@ class NeuralNetwork:
                     
                 update_progress_bar(epoch + 1, epochs, metrics=metrics)
             
-            # Early stopping check
             if early_stopping_patience and patience_counter >= early_stopping_patience:
                 if verbose >= 1:
                     print(f"\nEarly stopping triggered at epoch {epoch+1}")
                 
-                # Restore best weights
                 self.weights = best_weights
                 self.biases = best_biases
                 break
         
-        # Print newline after progress bar
         if verbose >= 1:
             print()
         
-        # Record total training time
         history['training_time'] = time.time() - start_time
         
-        # Print final results
-        if verbose >= 1:
+        if verbose >= 2:
             print(f"\nTraining completed in {history['training_time']:.2f} seconds")
             print(f"Best epoch: {history['best_epoch']}")
             print(f"Final train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f}")
@@ -301,7 +266,6 @@ class NeuralNetwork:
                 print(f"Best val loss: {history['best_val_loss']:.4f}, best val accuracy: {history['best_val_accuracy']:.4f}")
         
         return history
-
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -333,6 +297,23 @@ class NeuralNetwork:
         predictions = np.argmax(y_pred, axis=1)
         return np.mean(predictions == y_true)
     
+    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Tuple[float, np.ndarray]:
+        """
+        Evaluate the model on a dataset.
+        
+        Args:
+            X: Input data of shape (n_samples, input_size).
+            y: True labels (indices) of shape (n_samples,).
+            
+        Returns:
+            Tuple containing accuracy and confusion matrix.
+        """
+        y_pred = self.predict(X)
+        loss = self.cross_entropy_loss(y, y_pred)
+        acc = self.accuracy(y, y_pred)
+        
+        return acc, loss, y_pred
+    
     def confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray = None) -> np.ndarray:
         """
         Calculate confusion matrix.
@@ -356,20 +337,3 @@ class NeuralNetwork:
             conf_matrix[y_true[i], y_pred[i]] += 1
             
         return conf_matrix
-    
-    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Tuple[float, np.ndarray]:
-        """
-        Evaluate the model on a dataset.
-        
-        Args:
-            X: Input data of shape (n_samples, input_size).
-            y: True labels (indices) of shape (n_samples,).
-            
-        Returns:
-            Tuple containing accuracy and confusion matrix.
-        """
-        y_pred = self.predict(X)
-        loss = self.cross_entropy_loss(y, y_pred)
-        acc = self.accuracy(y, y_pred)
-        
-        return loss, acc

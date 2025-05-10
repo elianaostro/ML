@@ -39,11 +39,9 @@ def save_model(model: Any, filename: str) -> None:
         pickle.PicklingError: If the model object cannot be pickled.
     """
 
-    # Ensure the 'modelos' directory exists
     directory = "modelos"
     os.makedirs(directory, exist_ok=True)
 
-    # Construct the full path
     filepath = os.path.join(directory, filename)
 
     try:
@@ -72,7 +70,6 @@ def load_model(filename: str) -> Any:
                                 or if there are issues deserializing the object 
                                 (e.g., missing class definitions).
     """
-    # Construct the full path
     directory = "modelos"
     filepath = os.path.join(directory, filename)
 

@@ -1,4 +1,3 @@
-# src/improved_neural_network.py
 import numpy as np
 import time
 from typing import List, Tuple, Dict, Any, Optional
@@ -37,38 +36,33 @@ class ImprovedNeuralNetwork:
         self.dropout_rate = dropout_rate
         self.use_batch_norm = use_batch_norm
         
-        # Initialize weights and biases
         self.weights = []
         self.biases = []
         
-        # Parameters for batch normalization
-        self.gamma = []  # Scale parameter
-        self.beta = []   # Shift parameter
-        self.running_mean = []  # Running mean for inference
-        self.running_var = []   # Running variance for inference
+        self.gamma = [] 
+        self.beta = []  
+        self.running_mean = []
+        self.running_var = [] 
         
         for i in range(1, self.num_layers):
-            # He initialization for ReLU activation
             scale = np.sqrt(2.0 / layer_sizes[i-1])
             self.weights.append(np.random.randn(layer_sizes[i-1], layer_sizes[i]) * scale)
             self.biases.append(np.zeros((1, layer_sizes[i])))
             
-            # Initialize batch norm parameters if needed
-            if use_batch_norm and i < self.num_layers - 1:  # No batch norm in output layer
+            if use_batch_norm and i < self.num_layers - 1: 
                 self.gamma.append(np.ones((1, layer_sizes[i])))
                 self.beta.append(np.zeros((1, layer_sizes[i])))
                 self.running_mean.append(np.zeros((1, layer_sizes[i])))
                 self.running_var.append(np.ones((1, layer_sizes[i])))
         
-        # ADAM optimizer parameters
-        self.adam_m = [np.zeros_like(w) for w in self.weights]  # First moment estimate
-        self.adam_v = [np.zeros_like(w) for w in self.weights]  # Second moment estimate
-        self.adam_m_bias = [np.zeros_like(b) for b in self.biases]  # First moment for biases
-        self.adam_v_bias = [np.zeros_like(b) for b in self.biases]  # Second moment for biases
-        self.beta1 = 0.9  # Exponential decay rate for first moment
-        self.beta2 = 0.999  # Exponential decay rate for second moment
-        self.epsilon = 1e-8  # Small constant for numerical stability
-        self.t = 0  # Time step for ADAM
+        self.adam_m = [np.zeros_like(w) for w in self.weights] 
+        self.adam_v = [np.zeros_like(w) for w in self.weights] 
+        self.adam_m_bias = [np.zeros_like(b) for b in self.biases] 
+        self.adam_v_bias = [np.zeros_like(b) for b in self.biases] 
+        self.beta1 = 0.9  
+        self.beta2 = 0.999
+        self.epsilon = 1e-8  
+        self.t = 0 
     
     def relu(self, Z: np.ndarray) -> np.ndarray:
         """ReLU activation function."""
@@ -96,30 +90,23 @@ class ImprovedNeuralNetwork:
         Returns:
             Normalized activations and cache for backpropagation.
         """
-        # Store values for backpropagation
         cache = {}
         
         if training:
-            # Calculate mean and variance for this mini-batch
             mu = np.mean(Z, axis=0, keepdims=True)
             var = np.var(Z, axis=0, keepdims=True) + self.epsilon
             
-            # Normalize
             Z_norm = (Z - mu) / np.sqrt(var)
             
-            # Scale and shift
             out = self.gamma[layer_idx] * Z_norm + self.beta[layer_idx]
             
-            # Update running mean and variance
             momentum = 0.9
             self.running_mean[layer_idx] = momentum * self.running_mean[layer_idx] + (1 - momentum) * mu
             self.running_var[layer_idx] = momentum * self.running_var[layer_idx] + (1 - momentum) * var
             
-            # Store values for backpropagation
             cache = {'Z': Z, 'Z_norm': Z_norm, 'mu': mu, 'var': var, 'gamma': self.gamma[layer_idx], 
                     'beta': self.beta[layer_idx], 'layer_idx': layer_idx}
         else:
-            # Use running mean and variance for inference
             Z_norm = (Z - self.running_mean[layer_idx]) / np.sqrt(self.running_var[layer_idx] + self.epsilon)
             out = self.gamma[layer_idx] * Z_norm + self.beta[layer_idx]
         
@@ -144,18 +131,14 @@ class ImprovedNeuralNetwork:
         layer_idx = cache['layer_idx']
         N = Z.shape[0]
         
-        # Gradient with respect to gamma and beta
         dgamma = np.sum(dout * Z_norm, axis=0, keepdims=True)
         dbeta = np.sum(dout, axis=0, keepdims=True)
         
-        # Update gamma and beta
         self.gamma[layer_idx] -= self.learning_rate * dgamma
         self.beta[layer_idx] -= self.learning_rate * dbeta
         
-        # Gradient with respect to Z_norm
         dZ_norm = dout * gamma
         
-        # Gradient with respect to Z
         dvar = np.sum(dZ_norm * (Z - mu) * -0.5 * np.power(var + self.epsilon, -1.5), axis=0, keepdims=True)
         dmu = np.sum(dZ_norm * -1.0 / np.sqrt(var + self.epsilon), axis=0, keepdims=True) + \
               dvar * np.mean(-2.0 * (Z - mu), axis=0, keepdims=True)
@@ -177,16 +160,14 @@ class ImprovedNeuralNetwork:
         Returns:
             Output predictions of shape (n_samples, output_size).
         """
-        self.Z_values = []  # Pre-activation values
-        self.A_values = [X]  # Activation values, with input as first activation
-        self.dropout_masks = []  # Dropout masks
-        self.batch_norm_caches = []  # Batch normalization caches
+        self.Z_values = []  
+        self.A_values = [X] 
+        self.dropout_masks = []  
+        self.batch_norm_caches = [] 
         
-        # Pass through hidden layers with ReLU activation
         for i in range(self.num_layers - 2):
             Z = np.dot(self.A_values[-1], self.weights[i]) + self.biases[i]
             
-            # Apply batch normalization if enabled
             if self.use_batch_norm:
                 Z, bn_cache = self.batch_norm_forward(Z, i, training)
                 self.batch_norm_caches.append(bn_cache)
@@ -194,7 +175,6 @@ class ImprovedNeuralNetwork:
             self.Z_values.append(Z)
             A = self.relu(Z)
             
-            # Apply dropout if enabled and in training mode
             if training and self.dropout_rate > 0:
                 mask = np.random.binomial(1, 1 - self.dropout_rate, size=A.shape) / (1 - self.dropout_rate)
                 A *= mask
@@ -204,7 +184,6 @@ class ImprovedNeuralNetwork:
             
             self.A_values.append(A)
         
-        # Output layer with softmax activation (no dropout or batch norm)
         Z = np.dot(self.A_values[-1], self.weights[-1]) + self.biases[-1]
         self.Z_values.append(Z)
         A = self.softmax(Z)
@@ -225,17 +204,13 @@ class ImprovedNeuralNetwork:
         """
         m = y_true.shape[0]
         
-        # Convert y_true to one-hot encoding
         y_true_one_hot = np.zeros((m, self.layer_sizes[-1]))
         y_true_one_hot[np.arange(m), y_true.astype(int)] = 1
         
-        # Add small epsilon to avoid log(0)
         y_pred = np.clip(y_pred, 1e-15, 1 - 1e-15)
         
-        # Calculate cross-entropy
         cross_entropy = -np.sum(y_true_one_hot * np.log(y_pred)) / m
         
-        # Add L2 regularization term if lambda > 0
         l2_term = 0
         if self.l2_lambda > 0:
             for w in self.weights:
@@ -255,60 +230,46 @@ class ImprovedNeuralNetwork:
         """
         m = X.shape[0]
         
-        # Convert y to one-hot encoding
         y_one_hot = np.zeros((m, self.layer_sizes[-1]))
         y_one_hot[np.arange(m), y.astype(int)] = 1
         
-        # Calculate initial error (delta) for output layer
-        # For softmax + cross-entropy, this simplifies to (A_L - y)
         delta = self.A_values[-1] - y_one_hot
         
-        # Store gradients for all layers
         dW = []
         db = []
         
-        # Output layer gradients
         dW_out = np.dot(self.A_values[-2].T, delta) / m
         db_out = np.sum(delta, axis=0, keepdims=True) / m
         
-        # Add L2 regularization gradient if enabled
         if self.l2_lambda > 0:
             dW_out += (self.l2_lambda / m) * self.weights[-1]
         
         dW.insert(0, dW_out)
         db.insert(0, db_out)
         
-        # Backpropagate the error through hidden layers
         for l in range(self.num_layers - 3, -1, -1):
-            # Propagate delta to previous layer
             delta = np.dot(delta, self.weights[l+1].T)
             
-            # Apply dropout mask if used
             if self.dropout_masks[l] is not None:
                 delta *= self.dropout_masks[l]
             
-            # Apply activation derivative
             delta *= self.relu_derivative(self.Z_values[l])
             
-            # Apply batch normalization backward pass if enabled
             if self.use_batch_norm:
                 delta = self.batch_norm_backward(delta, self.batch_norm_caches[l])
             
-            # Calculate gradients
             dW_l = np.dot(self.A_values[l].T, delta) / m
             db_l = np.sum(delta, axis=0, keepdims=True) / m
             
-            # Add L2 regularization gradient if enabled
             if self.l2_lambda > 0:
                 dW_l += (self.l2_lambda / m) * self.weights[l]
             
             dW.insert(0, dW_l)
             db.insert(0, db_l)
         
-        # Update parameters based on selected optimizer
         if optimizer == 'adam':
             self._update_parameters_adam(dW, db)
-        else:  # sgd
+        else:
             self._update_parameters_sgd(dW, db)
     
     def _update_parameters_sgd(self, dW: List[np.ndarray], db: List[np.ndarray]) -> None:
@@ -334,23 +295,18 @@ class ImprovedNeuralNetwork:
         self.t += 1
         
         for i in range(len(self.weights)):
-            # Update biased first moment estimate
             self.adam_m[i] = self.beta1 * self.adam_m[i] + (1 - self.beta1) * dW[i]
             self.adam_m_bias[i] = self.beta1 * self.adam_m_bias[i] + (1 - self.beta1) * db[i]
             
-            # Update biased second raw moment estimate
             self.adam_v[i] = self.beta2 * self.adam_v[i] + (1 - self.beta2) * (dW[i]**2)
             self.adam_v_bias[i] = self.beta2 * self.adam_v_bias[i] + (1 - self.beta2) * (db[i]**2)
             
-            # Compute bias-corrected first moment estimate
             m_corrected = self.adam_m[i] / (1 - self.beta1**self.t)
             m_bias_corrected = self.adam_m_bias[i] / (1 - self.beta1**self.t)
             
-            # Compute bias-corrected second raw moment estimate
             v_corrected = self.adam_v[i] / (1 - self.beta2**self.t)
             v_bias_corrected = self.adam_v_bias[i] / (1 - self.beta2**self.t)
             
-            # Update parameters
             self.weights[i] -= self.learning_rate * m_corrected / (np.sqrt(v_corrected) + self.epsilon)
             self.biases[i] -= self.learning_rate * m_bias_corrected / (np.sqrt(v_bias_corrected) + self.epsilon)
     
@@ -364,16 +320,12 @@ class ImprovedNeuralNetwork:
             total_epochs: Total number of epochs.
         """
         if schedule == 'linear':
-            # Linear schedule with saturation
             decay = epoch / total_epochs
             self.learning_rate = self.initial_learning_rate * (1.0 / (1.0 + decay))
         elif schedule == 'exponential':
-            # Exponential decay
             decay_rate = 0.1
             self.learning_rate = self.initial_learning_rate * np.exp(-decay_rate * epoch / total_epochs)
     
-    # src/improved_neural_network.py
-    # Método train para ImprovedNeuralNetwork
     def train(self, X: np.ndarray, y: np.ndarray, X_val: np.ndarray = None, 
             y_val: np.ndarray = None, epochs: int = 100, batch_size: int = None, 
             optimizer: str = 'sgd', lr_schedule: str = None, 
@@ -399,7 +351,6 @@ class ImprovedNeuralNetwork:
         import time
         from src.utils import update_progress_bar
         
-        # Initialize history dictionary
         history = {
             'train_loss': [],
             'val_loss': [],
@@ -412,7 +363,6 @@ class ImprovedNeuralNetwork:
             'best_val_accuracy': 0.0
         }
         
-        # For early stopping
         best_val_loss = float('inf')
         patience_counter = 0
         best_weights = None
@@ -423,24 +373,18 @@ class ImprovedNeuralNetwork:
         start_time = time.time()
         
         for epoch in range(epochs):
-            # Update learning rate if schedule is specified
             if lr_schedule:
                 self._update_learning_rate(epoch, lr_schedule, epochs)
                 history['learning_rate'].append(self.learning_rate)
             
-            # Train for one epoch
             if batch_size is None:
-                # Full batch gradient descent
                 y_pred = self.forward(X, training=True)
                 self.backward(X, y, optimizer)
             else:
-                # Mini-batch gradient descent
-                # Shuffle the data
                 indices = np.random.permutation(m)
                 X_shuffled = X[indices]
                 y_shuffled = y[indices]
                 
-                # Process mini-batches
                 total_batches = (m + batch_size - 1) // batch_size
                 for i in range(0, m, batch_size):
                     end = min(i + batch_size, m)
@@ -450,20 +394,17 @@ class ImprovedNeuralNetwork:
                     self.forward(X_batch, training=True)
                     self.backward(X_batch, y_batch, optimizer)
                     
-                    # Update batch progress if very verbose
                     if verbose == 2:
                         batch_idx = i // batch_size + 1
                         update_progress_bar(batch_idx, total_batches, 
                                         metrics={"epoch": epoch+1, "total_epochs": epochs})
             
-            # Calculate training metrics
             y_pred_train = self.forward(X, training=False)
             train_loss = self.cross_entropy_loss(y, y_pred_train)
             train_accuracy = self.accuracy(y, y_pred_train)
             history['train_loss'].append(train_loss)
             history['train_accuracy'].append(train_accuracy)
             
-            # Calculate validation metrics if data is provided
             val_loss = None
             val_accuracy = None
             if X_val is not None and y_val is not None:
@@ -473,7 +414,6 @@ class ImprovedNeuralNetwork:
                 history['val_loss'].append(val_loss)
                 history['val_accuracy'].append(val_accuracy)
                 
-                # Update best performance
                 if val_loss < best_val_loss:
                     best_val_loss = val_loss
                     patience_counter = 0
@@ -482,7 +422,6 @@ class ImprovedNeuralNetwork:
                     history['best_val_loss'] = val_loss
                     history['best_val_accuracy'] = val_accuracy
                     
-                    # Save best weights
                     best_weights = [w.copy() for w in self.weights]
                     best_biases = [b.copy() for b in self.biases]
                     if self.use_batch_norm:
@@ -491,7 +430,6 @@ class ImprovedNeuralNetwork:
                 else:
                     patience_counter += 1
             
-            # Update progress bar
             if verbose >= 1:
                 metrics = {
                     "train_loss": train_loss, 
@@ -506,12 +444,10 @@ class ImprovedNeuralNetwork:
                     
                 update_progress_bar(epoch + 1, epochs, metrics=metrics)
             
-            # Early stopping check
             if early_stopping_patience and patience_counter >= early_stopping_patience:
                 if verbose >= 1:
                     print(f"\nEarly stopping triggered at epoch {epoch+1}")
                 
-                # Restore best weights
                 self.weights = best_weights
                 self.biases = best_biases
                 if self.use_batch_norm:
@@ -519,15 +455,12 @@ class ImprovedNeuralNetwork:
                     self.beta = best_beta
                 break
         
-        # Print newline after progress bar
         if verbose >= 1:
             print()
         
-        # Record total training time
         history['training_time'] = time.time() - start_time
         
-        # Print final results
-        if verbose >= 1:
+        if verbose >= 2:
             print(f"\nTraining completed in {history['training_time']:.2f} seconds")
             print(f"Best epoch: {history['best_epoch']}")
             print(f"Final train loss: {train_loss:.4f}, train accuracy: {train_accuracy:.4f}")
