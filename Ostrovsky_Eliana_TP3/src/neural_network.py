@@ -308,11 +308,11 @@ class NeuralNetwork:
         Returns:
             Tuple containing accuracy and confusion matrix.
         """
-        y_pred = self.predict(X)
-        loss = self.cross_entropy_loss(y, y_pred)
-        acc = self.accuracy(y, y_pred)
-        
-        return acc, loss, y_pred
+        probs = self.forward(X)
+        preds = np.argmax(probs, axis=1)
+        loss = self.cross_entropy_loss(y, probs)
+        acc = self.accuracy(y, probs)
+        return acc, loss, preds
     
     def confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray = None) -> np.ndarray:
         """
@@ -327,7 +327,7 @@ class NeuralNetwork:
         """
         if y_pred is None:
             y_pred = self.predict(X)
-        else:
+        elif y_pred.ndim > 1:
             y_pred = np.argmax(y_pred, axis=1)
         
         n_classes = self.layer_sizes[-1]

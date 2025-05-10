@@ -118,9 +118,9 @@ def run_architecture_experiments(architectures, cofiguration, ImprovedNeuralNetw
         })
 
         print(f"\nResults for {arch['name']}:")
-        print(f"Training time: {history['training_time']:.2f} seconds")
-        print(f"Final train loss: {history['final_train_loss']:.4f}, train accuracy: {history['final_train_accuracy']:.4f}")
-        print(f"Final val loss: {history['final_val_loss']:.4f}, val accuracy: {history['final_val_accuracy']:.4f}")
+        print(f"Training time: {arch_result['training_time']:.2f} seconds")
+        print(f"Final train loss: {arch_result['final_train_loss']:.4f}, train accuracy: {arch_result['final_train_accuracy']:.4f}")
+        print(f"Final val loss: {arch_result['final_val_loss']:.4f}, val accuracy: {arch_result['final_val_accuracy']:.4f}")
 
         architecture_results.append(arch_result)
     

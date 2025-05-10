@@ -492,6 +492,23 @@ class ImprovedNeuralNetwork:
         
         return np.mean(predictions == y_true)
     
+    def evaluate(self, X: np.ndarray, y: np.ndarray) -> Tuple[float, np.ndarray]:
+        """
+        Evaluate the model on a dataset.
+        
+        Args:
+            X: Input data of shape (n_samples, input_size).
+            y: True labels (indices) of shape (n_samples,).
+            
+        Returns:
+            Tuple containing accuracy and confusion matrix.
+        """
+        probs = self.forward(X)
+        preds = np.argmax(probs, axis=1)
+        loss = self.cross_entropy_loss(y, probs)
+        acc = self.accuracy(y, probs)
+        return acc, loss, preds
+    
     def confusion_matrix(self, y_true: np.ndarray, y_pred: np.ndarray = None) -> np.ndarray:
         """Calculate confusion matrix."""
         if y_pred is None:
