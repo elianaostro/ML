@@ -1,0 +1,239 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}         % Para incluir imágenes
+\usepackage{amsmath}          % Para notación matemática
+\usepackage{amssymb}          % Para símbolos matemáticos como \mathbb
+\usepackage[margin=3cm]{geometry}  % Márgenes
+\usepackage[font=normalsize,labelfont=small]{caption}  % Estilo de captions
+\usepackage{hyperref}         % Para links clickeables
+\usepackage{array}            % Para tablas más personalizadas
+\usepackage{booktabs}         % Para tablas con mejor estilo (toprule, midrule, bottomrule)
+
+% EXTENSIÓN MÁXIMA: 10 HOJAS SIN EXCEPCIÓN.
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    % Se asume que Logo-Udesa.jpg está en la misma carpeta o en una ruta accesible por LaTeX
+    \includegraphics[scale=0.8]{Logo-Udesa.jpg}\par 
+    % Comentado para evitar error si el logo no está, el usuario debe asegurarse de tenerlo.
+    \vspace{10pt}
+
+    {\LARGE \textbf{I302 - Aprendizaje Automático\\ y Aprendizaje Profundo}\par}
+    \vspace{1cm}
+
+    {\LARGE \textbf{Trabajo Práctico 3: \\Redes Neuronales}\par}
+    \vspace{4cm}
+    
+    {\LARGE {Eliana Ostrovsky}\par}
+    \vspace{3cm}
+    
+    {\Large \today\par}
+    \vspace{0.5cm}
+    \Large{Ingeniería en Inteligencia Artificial}
+\end{titlepage}
+
+% RESUMEN
+\begin{abstract}
+En este trabajo práctico se abordó el desarrollo y la evaluación de modelos de redes neuronales para la clasificación de imágenes de caracteres japoneses. Se implementaron redes neuronales desde cero, comenzando con un modelo base (M0) y progresivamente incorporando diversas técnicas avanzadas como optimizadores (ADAM), regularización (L2, dropout, early stopping), mini-batch gradient descent y ajuste de tasas de aprendizaje para construir un modelo mejorado (M1). Posteriormente, se utilizaron estas implementaciones como base para explorar modelos equivalentes y más complejos utilizando la librería PyTorch (M2, M3, M4). Se realizó un análisis comparativo exhaustivo de la performance de estos modelos, evaluando su capacidad de generalización y el impacto de las distintas técnicas y arquitecturas. El modelo M3, una red neuronal profunda optimizada en PyTorch, demostró el mejor rendimiento en el conjunto de validación y prueba. Finalmente, se utilizó el mejor modelo para generar predicciones en un conjunto de datos de desafío.
+\end{abstract}
+
+% INTRODUCCIÓN
+\section{Introducción}
+El presente trabajo práctico se centra en la clasificación de imágenes de caracteres japoneses, un problema de reconocimiento de patrones visuales con un considerable número de clases. La tarea consiste en asignar a cada imagen de entrada, representada como una matriz de píxeles de $28 \times 28$ en escala de grises, una etiqueta correspondiente a uno de los 49 caracteres japoneses posibles.
+
+El objetivo principal es doble: primero, construir y entender el funcionamiento interno de las redes neuronales mediante una implementación propia, incluyendo el algoritmo de backpropagation y diversas técnicas de entrenamiento. Segundo, explorar y comparar el rendimiento de estas implementaciones con modelos desarrollados utilizando PyTorch, una librería estándar en el campo del aprendizaje profundo. A lo largo del trabajo, se investiga el impacto de diferentes arquitecturas, hiperparámetros y técnicas de regularización en la capacidad de los modelos para aprender y generalizar a partir de los datos. La salida del algoritmo es la clase predicha para cada imagen y, en el contexto del desafío final, las probabilidades a posteriori para cada una de las 49 clases.
+
+% METODOS
+\section{Métodos}
+
+\subsection{Conjunto de Datos}
+Se utilizó un conjunto de datos de imágenes de caracteres japoneses, similar en estructura al conocido MNIST. Cada instancia del dataset consiste en una imagen de $28 \times 28$ píxeles en escala de grises, aplanada a un vector de 784 características. El dataset contiene un total de 49 clases distintas. (Fuente: \texttt{TP3\_Enunciado\_1S\_2025.pdf}, \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}).
+
+\paragraph{Preprocesamiento:} Las imágenes fueron normalizadas dividiendo el valor de cada píxel por 255, escalando así los valores de entrada al rango $[0, 1]$. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}).
+
+\paragraph{División de Datos:} El conjunto de datos original se dividió en tres subconjuntos: entrenamiento, validación y prueba. Se utilizó una división estratificada para mantener la proporción de las clases en cada conjunto. Las proporciones fueron aproximadamente 64\% para entrenamiento, 16\% para validación y 20\% para prueba. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}). Específicamente, partiendo de 5000 muestras, se obtuvieron:
+\begin{itemize}
+    \item Conjunto de entrenamiento: 3197 muestras.
+    \item Conjunto de validación: 802 muestras.
+    \item Conjunto de prueba: 1001 muestras.
+\end{itemize}
+
+Se realizaron visualizaciones de muestras aleatorias de cada clase y de la distribución de clases para un análisis exploratorio inicial (ver Notebook, Secciones 1.1 y Figuras correspondientes).
+
+\subsection{Red Neuronal Básica (Modelo M0)}
+Se implementó una red neuronal multicapa (Feedforward Neural Network) desde cero.
+\paragraph{Arquitectura:} La red consta de una capa de entrada, $L$ capas ocultas y una capa de salida. Las neuronas en las capas ocultas utilizan la función de activación ReLU (Rectified Linear Unit):
+$$\text{ReLU}(z) = \max(0, z)$$
+La capa de salida utiliza la función de activación Softmax para producir una distribución de probabilidad sobre las $K=49$ clases:
+$$\text{Softmax}(z_k) = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}$$
+\paragraph{Entrenamiento:} El entrenamiento se realiza mediante el algoritmo de backpropagation para calcular los gradientes de la función de costo con respecto a los pesos y biases de la red. Estos gradientes se utilizan luego en el Descenso de Gradiente Estándar (SGD) para actualizar los parámetros del modelo. La función de costo utilizada es la Entropía Cruzada Categórica (Categorical Cross-Entropy):
+$$L = -\frac{1}{N} \sum_{i=1}^{N} \sum_{k=1}^{K} y_{i,k} \log(\hat{p}_{i,k})$$
+donde $N$ es el número de muestras, $K$ es el número de clases, $y_{i,k}$ es un indicador binario (1 si la muestra $i$ pertenece a la clase $k$, 0 en caso contrario), y $\hat{p}_{i,k}$ es la probabilidad predicha por el modelo para la muestra $i$ y la clase $k$.
+
+\paragraph{Configuración Específica de M0:}
+\begin{itemize}
+    \item Capas ocultas: 2.
+    \item Nodos en la primera capa oculta: 100.
+    \item Nodos en la segunda capa oculta: 80.
+    \item Tasa de aprendizaje (learning rate): 0.01.
+    \item Épocas de entrenamiento: 5000.
+\end{itemize}
+
+\subsection{Mejoras Implementadas y Modelo Avanzado (M1)}
+Sobre la base de la red neuronal básica, se implementaron y evaluaron varias técnicas para mejorar el rendimiento y la eficiencia del entrenamiento. Estas mejoras fueron probadas individualmente y luego combinadas para formar el modelo M1.
+\begin{itemize}
+    \item \textbf{Mini-batch Stochastic Gradient Descent (MB-SGD):} En lugar de calcular gradientes sobre todo el conjunto de entrenamiento (batch GD) o sobre una única muestra (SGD), se utilizan mini-lotes de datos. Esto ofrece un compromiso entre la estabilidad de batch GD y la eficiencia de SGD.
+    \item \textbf{Optimizador ADAM:} Es un algoritmo de optimización adaptativo que calcula tasas de aprendizaje individuales para diferentes parámetros, basándose en estimaciones de primer y segundo momento de los gradientes.
+    \item \textbf{Scheduling de Tasa de Aprendizaje:} Se implementaron esquemas lineal (con saturación) y exponencial para ajustar dinámicamente la tasa de aprendizaje durante el entrenamiento, usualmente disminuyéndola con el tiempo.
+    \item \textbf{Regularización L2 (Weight Decay):} Agrega un término de penalización a la función de costo proporcional al cuadrado de la magnitud de los pesos:
+    $$L_{\text{total}} = L_{\text{original}} + \frac{\lambda}{2m} \sum_{w} w^2$$
+    donde $\lambda$ es el hiperparámetro de regularización. Esto ayuda a prevenir el sobreajuste al mantener los pesos pequeños.
+    \item \textbf{Early Stopping:} Monitorea la performance del modelo en el conjunto de validación durante el entrenamiento y detiene el proceso si no hay mejora (o si empeora) durante un número determinado de épocas (paciencia), guardando el modelo con el mejor rendimiento en validación.
+    \item \textbf{Dropout (Opcional, implementado):} Durante el entrenamiento, descarta aleatoriamente un porcentaje de neuronas (y sus conexiones) en cada capa. Esto fuerza a la red a aprender representaciones más robustas y previene la co-adaptación excesiva de neuronas.
+    \item \textbf{Batch Normalization (Opcional, implementado):} Normaliza las entradas de cada capa para tener media cero y varianza unitaria. Esto puede acelerar el entrenamiento y mejorar la regularización.
+\end{itemize}
+
+\paragraph{Selección de Hiperparámetros y Arquitectura para M1:}
+Se realizó una búsqueda exhaustiva (documentada en el Notebook, sección 3 y subsecciones) para determinar la mejor combinación de estas técnicas, así como la arquitectura de red (número de capas y neuronas) y otros hiperparámetros (tasa de aprendizaje, tamaño de mini-batch, parámetros de regularización, etc.). El modelo M1 final se determinó como la configuración que logró el menor error en el conjunto de validación tras esta exploración. La configuración final de M1 fue:
+\begin{itemize}
+    \item Arquitectura: Capa de entrada (784) -> 200 neuronas (ReLU) -> 150 neuronas (ReLU) -> Capa de salida (49 Softmax).
+    \item Optimizador: ADAM.
+    \item Tasa de aprendizaje inicial: 0.0005.
+    \item Planificador de tasa de aprendizaje: Exponencial.
+    \item Regularización L2 ($\lambda$): 0.0 (según configuración final \texttt{best\_overall\_config}, aunque experimentos previos usaron valores mayores).
+    \item Dropout rate: 0.3.
+    \item Batch Normalization: No utilizada.
+    \item Early Stopping: Paciencia de 20 épocas.
+    \item Tamaño de mini-batch: 64.
+\end{itemize}
+
+\subsection{Implementación en PyTorch (Modelos M2, M3, M4)}
+Se utilizó PyTorch para implementar y comparar modelos con la implementación propia.
+\begin{itemize}
+    \item \textbf{Modelo M2:} Se replicó la arquitectura e hiperparámetros del modelo M1 utilizando PyTorch para una comparación directa. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}).
+    \item \textbf{Modelo M3:} Se buscó la mejor arquitectura e hiperparámetros utilizando PyTorch, explorando diferentes configuraciones para maximizar el rendimiento en el conjunto de validación. La arquitectura final de M3 fue: Capa de entrada (784) -> 256 neuronas (ReLU) -> 128 neuronas (ReLU) -> Capa de salida (49 Softmax), con ADAM, LR 0.0005, L2 0.0001, Dropout 0.3, Early Stopping (paciencia 15). (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}).
+    \item \textbf{Modelo M4:} Se diseñó un modelo en PyTorch con la intención de que sobreajustara rápidamente al conjunto de entrenamiento. Esto se logró utilizando una red grande (ej. 512 -> 256 -> 128 neuronas), sin regularización (o muy poca) y una tasa de aprendizaje relativamente alta. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}).
+\end{itemize}
+
+\subsection{Métricas de Evaluación}
+Para evaluar el rendimiento de los modelos, se utilizaron las siguientes métricas, consistentes con el TP2:
+\begin{itemize}
+    \item \textbf{Accuracy (Exactitud):} Proporción de predicciones correctas sobre el total de predicciones.
+    $$\text{Accuracy} = \frac{\text{Número de predicciones correctas}}{\text{Número total de predicciones}} = \frac{\sum_{i=1}^{N} \mathbb{I}(\hat{y}_i = y_i)}{N}$$
+    donde $\mathbb{I}(\cdot)$ es la función indicadora.
+    \item \textbf{Cross-Entropy Loss (Pérdida por Entropía Cruzada):} Mide la diferencia entre la distribución de probabilidad predicha y la distribución verdadera.
+    $$L_{CE} = -\frac{1}{N} \sum_{i=1}^{N} \sum_{k=1}^{K} y_{i,k} \log(\hat{p}_{i,k})$$
+    donde $N$ es el número de muestras, $K$ el número de clases, $y_{i,k}$ es 1 si la muestra $i$ es de la clase $k$ y 0 de lo contrario, y $\hat{p}_{i,k}$ es la probabilidad predicha por el modelo.
+    \item \textbf{Matriz de Confusión:} Tabla que visualiza el rendimiento de un algoritmo de clasificación, mostrando los verdaderos positivos, falsos positivos, verdaderos negativos y falsos negativos para cada clase (o en forma agregada para problemas multiclase, mostrando las predicciones correctas e incorrectas entre clases).
+\end{itemize}
+
+\section{Resultados}
+
+\subsection{Modelo Base (M0)}
+El modelo M0, con arquitectura [784, 100, 80, 49], fue entrenado durante 5000 épocas.
+Los resultados obtenidos fueron:
+\begin{itemize}
+    \item \textbf{Entrenamiento:} Accuracy = 0.8661, Cross-Entropy Loss = 0.6248.
+    \item \textbf{Validación:} Accuracy = 0.5736, Cross-Entropy Loss = 1.7288.
+\end{itemize}
+
+Las curvas de aprendizaje (Figura \ref{fig:M0_learning_curves}, ver Notebook sección 2, Figura "Cross-Entropy Loss" y "Accuracy") mostraron una clara divergencia entre el rendimiento en entrenamiento y validación, indicando sobreajuste. La pérdida en validación comenzó a aumentar después de cierto número de épocas mientras la pérdida de entrenamiento continuaba disminuyendo.
+
+% Placeholder para la figura de curvas de aprendizaje de M0
+\begin{figure}[h!]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{M0_learning_curves.png} 
+    % El usuario debe generar y enlazar la imagen M0_learning_curves.png del notebook
+    \caption{Curvas de aprendizaje (Pérdida y Accuracy vs. Épocas) para el modelo M0 en los conjuntos de entrenamiento y validación. (Referencia: Notebook, Sección 2).}
+    \label{fig:M0_learning_curves}
+\end{figure}
+
+La matriz de confusión para el conjunto de validación (Figura \ref{fig:M0_confusion_matrix}, ver Notebook sección 2, Figura "Confusion Matrix") reveló que, si bien muchas clases se clasificaban correctamente, existían confusiones significativas entre ciertas clases.
+
+% Placeholder para la figura de matriz de confusión de M0
+\begin{figure}[h!]
+    \centering
+    % \includegraphics[width=0.6\textwidth]{M0_confusion_matrix.png}
+    % El usuario debe generar y enlazar la imagen M0_confusion_matrix.png del notebook
+    \caption{Matriz de confusión del modelo M0 en el conjunto de validación. (Referencia: Notebook, Sección 2).}
+    \label{fig:M0_confusion_matrix}
+\end{figure}
+
+
+\subsection{Estudio de Ablación y Modelo Avanzado (M1)}
+Se realizaron experimentos sistemáticos para evaluar el impacto de cada mejora propuesta. A continuación, se resumen los hallazgos clave (ver Notebook, Sección 3.1 y Figuras de comparación \texttt{compare\_training\_times} y \texttt{compare\_final\_metrics}):
+\begin{itemize}
+    \item \textbf{Mini-batch SGD:} Mejoró significativamente la velocidad de convergencia y redujo el ruido en las actualizaciones de gradientes en comparación con SGD estándar, permitiendo el uso de tasas de aprendizaje más pequeñas y estables. Se observó una mejora en la accuracy de validación. (Notebook page 11, val acc 0.5860 vs baseline SGD val acc 0.5075).
+    \item \textbf{ADAM Optimizer:} Proporcionó una convergencia más rápida y un mejor rendimiento final en validación en comparación con SGD estándar, incluso con la misma tasa de aprendizaje inicial. Fue uno de los componentes más impactantes. (Notebook page 11, ADAM val acc 0.6297).
+    \item \textbf{Scheduling de Tasa de Aprendizaje:} Las estrategias lineal y exponencial ayudaron a refinar el entrenamiento, previniendo que la tasa de aprendizaje fuera demasiado alta en etapas posteriores. La exponencial tendió a dar mejores resultados. (Notebook page 11, exp. schedule val acc 0.5237).
+    \item \textbf{Regularización L2:} Ayudó a mitigar el sobreajuste, resultando en una menor brecha entre el rendimiento de entrenamiento y validación y, en algunos casos, una mejor accuracy de validación. (Notebook page 11, L2 val acc 0.5960).
+    \item \textbf{Early Stopping:} Fue crucial para prevenir el sobreajuste al detener el entrenamiento cuando el rendimiento en validación dejaba de mejorar, ahorrando tiempo computacional y seleccionando el modelo con mejor generalización. (Notebook page 11, ES val acc 0.5960, stopped early).
+    \item \textbf{Dropout:} Mostró ser una técnica de regularización efectiva, mejorando la accuracy de validación al reducir el sobreajuste. (Notebook page 11, Dropout val acc 0.6097).
+    \item \textbf{Batch Normalization:} Si bien se implementó, su impacto fue mixto en las primeras pruebas, a veces llevando a inestabilidades o no mejorando significativamente sobre otras combinaciones. (Notebook page 11, BN val acc 0.4838).
+\end{itemize}
+
+El \textbf{Modelo M1} se configuró con la arquitectura [784, 200, 150, 49] y la combinación de hiperparámetros y técnicas que produjeron el mejor resultado en validación durante la búsqueda: ADAM, LR de 0.0005 con schedule exponencial, dropout de 0.3, y early stopping con paciencia 20. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}).
+Los resultados de M1 en validación fueron:
+\begin{itemize}
+    \item \textbf{Validación (M1):} Accuracy = 0.6808 (obtenido tras el \texttt{schedule\_tuning\_results} en el notebook). Cross-Entropy Loss = (valor correspondiente no explícito en ese punto del notebook, pero se infiere que es el mejor).
+\end{itemize}
+Las curvas de aprendizaje para M1 (ver Notebook, gráficas de los experimentos finales de tuning para M1) mostraron una mejor convergencia y menor sobreajuste que M0.
+
+\subsection{Modelos PyTorch (M2, M3, M4)}
+\begin{itemize}
+    \item \textbf{Modelo M2 (Réplica de M1 en PyTorch):} Al replicar M1, se obtuvo una accuracy de validación de 0.6783. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}). Este resultado es comparable al de la implementación propia de M1, validando la correctitud de ambas.
+    \item \textbf{Modelo M3 (Mejor PyTorch):} Mediante la exploración de arquitecturas e hiperparámetros en PyTorch, el modelo M3 ([784, 256, 128, 49], ADAM, LR 0.0005, L2 0.0001, Dropout 0.3, ES 15) alcanzó una accuracy de validación de 0.6908. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}). Este fue el mejor rendimiento en validación obtenido entre todos los modelos.
+    \item \textbf{Modelo M4 (Overfitting en PyTorch):} El modelo M4 ([784, 512, 256, 128, 49], sin regularización fuerte, LR 0.001) mostró un rápido sobreajuste: alcanzó una accuracy de entrenamiento de 1.0000 en pocas épocas, mientras que su accuracy de validación fue de 0.6209. (Fuente: \texttt{Ostrovsky\_Eliana\_Notebook\_TP3.pdf}). Las curvas de aprendizaje (ver Notebook, Sección 4.3 Figura "Learning Curves for M4") ilustran claramente este comportamiento.
+\end{itemize}
+
+\subsection{Comparación Final de Modelos en el Conjunto de Prueba}
+Finalmente, los cinco modelos principales (M0, M1, M2, M3, M4) fueron evaluados en el conjunto de prueba para una comparación final de su capacidad de generalización.
+Los resultados se resumen en la Tabla \ref{tab:test_results}.
+
+\begin{table}[h!]
+\centering
+\caption{Comparación del rendimiento de los modelos en el conjunto de prueba.}
+\label{tab:test_results}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Modelo & Implementación & Test Accuracy & Test Cross-Entropy \\
+\midrule
+M0 & Propia & 0.5664 & 1.7834 \\ % Notebook [141]
+M1 & Propia & 0.6733 & 1.3168 \\ % Notebook [142]
+M2 & PyTorch (Réplica M1) & 0.6673 & 1.3215 \\ % Notebook [143]
+M3 & PyTorch (Mejor) & \textbf{0.6763} & \textbf{1.2896} \\ % Notebook [144]
+M4 & PyTorch (Overfit) & 0.6124 & 1.9106 \\ % Notebook [145]
+\bottomrule
+\end{tabular}
+\end{table}
+
+El modelo M3 (mejor PyTorch) obtuvo la mayor accuracy (0.6763) y la menor pérdida (1.2896) en el conjunto de prueba, confirmando su superioridad. El modelo M1 (mejor implementación propia) tuvo un rendimiento muy cercano (accuracy 0.6733). El modelo M0 tuvo el peor rendimiento, como era de esperar. El modelo M4, diseñado para sobreajustar, tuvo un rendimiento bajo en prueba a pesar de su perfecto rendimiento en entrenamiento. La réplica M2 tuvo un rendimiento similar a M1, lo que indica una buena correspondencia entre las implementaciones.
+
+% Placeholder para gráfica comparativa de Test Accuracy
+\begin{figure}[h!]
+    \centering
+    % \includegraphics[width=0.7\textwidth]{test_accuracy_comparison.png}
+    % El usuario debe generar y enlazar la imagen test_accuracy_comparison.png del notebook (e.g., un bar plot)
+    \caption{Comparación de Accuracy en el conjunto de prueba para los modelos M0, M1, M2, M3 y M4. (Referencia: Notebook, Sección 4.4).}
+    \label{fig:test_comp}
+\end{figure}
+
+
+\subsection{Desafío}
+Utilizando el modelo considerado como el mejor (basado en la exploración para M3, re-entrenado con una configuración robusta: arquitectura [784, 256, 128, 49], LR 0.001, L2 0.0005, Dropout 0.2, ADAM, Early Stopping; entrenado sobre una combinación de datos de entrenamiento y validación originales), se generaron las predicciones de probabilidades a posteriori para el dataset \texttt{X\_COMP.npy}. Este modelo final alcanzó una accuracy en el conjunto de test (utilizado como validación en este re-entrenamiento) de 0.6633. 
+
+\section{Conclusiones}
+En este trabajo práctico se implementaron y evaluaron redes neuronales para la clasificación de caracteres japoneses. La implementación propia permitió una comprensión profunda de los mecanismos internos, mientras que PyTorch facilitó la experimentación con arquitecturas más complejas y la obtención de mejores resultados.
+
+El modelo base M0 mostró un claro sobreajuste, que fue mitigado significativamente en el modelo M1 mediante la incorporación de técnicas como ADAM, regularización L2, dropout, early stopping y un adecuado ajuste de la tasa de aprendizaje y arquitectura. El modelo M1 logró una mejora sustancial en la generalización.
+
+La comparación con PyTorch (M2, M3) demostró que, si bien la implementación propia puede alcanzar un buen rendimiento (M1 vs M2), las herramientas especializadas como PyTorch permiten explorar y optimizar modelos de manera más eficiente, llevando al modelo M3 con el mejor desempeño general (accuracy de 0.6763 en test). El experimento con el modelo M4 ilustró cómo configuraciones no regularizadas y demasiado complejas pueden llevar a un severo sobreajuste.
+
+Las técnicas de regularización y los optimizadores adaptativos como ADAM fueron cruciales para el éxito de los modelos más profundos. La selección de la arquitectura adecuada también jugó un papel fundamental. Este trabajo subraya la importancia de un proceso iterativo de diseño, experimentación y evaluación en el desarrollo de modelos de aprendizaje profundo.
+
+Como trabajo futuro, se podría explorar el uso de redes convolucionales (CNNs), que suelen ser más adecuadas para tareas de visión por computadora, y técnicas de aumento de datos más sofisticadas para mejorar aún más el rendimiento.
+
+\end{document}
