@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2025.5.8)  12 MAY 2025 18:54
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2025.5.8)  12 MAY 2025 22:07
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**"/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP3 copy/informe/Ostrovsky_Eliana_Informe_TP3.pdf.tex"
-(/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP3 copy/informe/Ostrovsky_Eliana_Informe_TP3.pdf.tex
+**"/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP3 copy/informe/Ostrovsky_Eliana_Informe_TP3.tex"
+(/home/elianaostro/Documents/ML/Ostrovsky_Eliana_TP3 copy/informe/Ostrovsky_Eliana_Informe_TP3.tex
 LaTeX2e <2021-11-15> patch level 1
 L3 programming layer <2022-01-21> (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
 Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
@@ -288,49 +288,56 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@thisruleclass=\count291
 \@lastruleclass=\count292
 \@thisrulewidth=\dimen184
+) (/usr/share/texlive/texmf-dist/tex/latex/float/float.sty
+Package: float 2001/11/08 v1.3d Float enhancements (AL)
+\c@float@type=\count293
+\float@exts=\toks27
+\float@box=\box54
+\@float@everytoks=\toks28
+\@floatcapt=\box55
 ) (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2022-01-12 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count293
-\l__pdf_internal_box=\box54
-) (./Ostrovsky_Eliana_Informe_TP3.pdf.aux
+\l__color_backend_stack_int=\count294
+\l__pdf_internal_box=\box56
+) (./Ostrovsky_Eliana_Informe_TP3.aux
 LaTeX Info: Redefining \. on input line 25.
 LaTeX Info: Redefining \% on input line 25.
 )
-\openout1 = `Ostrovsky_Eliana_Informe_TP3.pdf.aux'.
+\openout1 = `Ostrovsky_Eliana_Informe_TP3.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Info: Redefining \. on input line 14.
-LaTeX Info: Redefining \% on input line 14.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Info: Redefining \. on input line 15.
+LaTeX Info: Redefining \% on input line 15.
  (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count294
+\scratchcounter=\count295
 \scratchdimen=\dimen185
-\scratchbox=\box55
-\nofMPsegments=\count295
-\nofMParguments=\count296
-\everyMPshowfont=\toks27
-\MPscratchCnt=\count297
+\scratchbox=\box57
+\nofMPsegments=\count296
+\nofMParguments=\count297
+\everyMPshowfont=\toks29
+\MPscratchCnt=\count298
 \MPscratchDim=\dimen186
-\MPnumerator=\count298
-\makeMPintoPDFobject=\count299
-\everyMPtoPDFconversion=\toks28
+\MPnumerator=\count299
+\makeMPintoPDFobject=\count300
+\everyMPtoPDFconversion=\toks30
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
@@ -372,9 +379,10 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: float package is loaded.
 Package caption Info: hyperref package is loaded.
 Package caption Info: End \AtBeginDocument code.
-Package hyperref Info: Link coloring OFF on input line 14.
+Package hyperref Info: Link coloring OFF on input line 15.
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
  (/usr/share/texlive/texmf-dist/tex/latex/refcount/refcount.sty
@@ -382,69 +390,93 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 ) (/usr/share/texlive/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count300
+\c@section@level=\count301
 )
-LaTeX Info: Redefining \ref on input line 14.
-LaTeX Info: Redefining \pageref on input line 14.
-LaTeX Info: Redefining \nameref on input line 14.
- (./Ostrovsky_Eliana_Informe_TP3.pdf.out) (./Ostrovsky_Eliana_Informe_TP3.pdf.out)
+LaTeX Info: Redefining \ref on input line 15.
+LaTeX Info: Redefining \pageref on input line 15.
+LaTeX Info: Redefining \nameref on input line 15.
+ (./Ostrovsky_Eliana_Informe_TP3.out) (./Ostrovsky_Eliana_Informe_TP3.out)
 \@outlinefile=\write3
-\openout3 = `Ostrovsky_Eliana_Informe_TP3.pdf.out'.
+\openout3 = `Ostrovsky_Eliana_Informe_TP3.out'.
 
-<Logo-Udesa.jpg, id=60, 351.3125pt x 146.5475pt>
-File: Logo-Udesa.jpg Graphic file (type jpg)
-<use Logo-Udesa.jpg>
-Package pdftex.def Info: Logo-Udesa.jpg  used on input line 20.
+<imagenes/Logo-Udesa.jpg, id=60, 351.3125pt x 146.5475pt>
+File: imagenes/Logo-Udesa.jpg Graphic file (type jpg)
+<use imagenes/Logo-Udesa.jpg>
+Package pdftex.def Info: imagenes/Logo-Udesa.jpg  used on input line 20.
 (pdftex.def)             Requested size: 281.05037pt x 117.23813pt.
  [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./Logo-Udesa.jpg>]
-LaTeX Font Info:    Trying to load font information for U+msa on input line 45.
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./imagenes/Logo-Udesa.jpg>]
+LaTeX Font Info:    Trying to load font information for U+msa on input line 44.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 45.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 44.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-Overfull \hbox (45.66092pt too wide) in paragraph at lines 55--56
-\OT1/cmr/m/n/10.95 255, es-ca-lan-do as^^S^^P los va-lo-res de en-tra-da al ran-go $[0\OML/cmm/m/it/10.95 ; \OT1/cmr/m/n/10.95 1]$. (Fuen-te: \OT1/cmtt/m/n/10.95 Ostrovsky[]Eliana[]Notebook[]TP3.pdf\OT1/cmr/m/n/10.95 ). 
- []
-
-
-Overfull \hbox (21.38841pt too wide) in paragraph at lines 57--58
-\OT1/cmr/m/n/10.95 mien-to, 16$ $% pa-ra va-li-da-ci^^Son y 20$ $% pa-ra prue-ba. (Fuen-te: \OT1/cmtt/m/n/10.95 Ostrovsky[]Eliana[]Notebook[]TP3.pdf\OT1/cmr/m/n/10.95 ).
- []
-
-pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
+)pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.59     \item C
-                onjunto de entrenamiento: 3197 muestras. [1] [2] [3]
-Overfull \hbox (24.70395pt too wide) in paragraph at lines 117--118
-\OT1/cmr/m/n/10.95 Dro-pout 0.3, Early Stop-ping (pa-cien-cia 15). (Fuen-te: \OT1/cmtt/m/n/10.95 Ostrovsky[]Eliana[]Notebook[]TP3.pdf\OT1/cmr/m/n/10.95 ). 
+l.61 
+      [1]
+<imagenes/sample_images.png, id=79, 409.0482pt x 143.0946pt>
+File: imagenes/sample_images.png Graphic file (type png)
+<use imagenes/sample_images.png>
+Package pdftex.def Info: imagenes/sample_images.png  used on input line 64.
+(pdftex.def)             Requested size: 266.14978pt x 93.10863pt.
+ [2 <./imagenes/sample_images.png>] [3] [4]
+Overfull \hbox (6.04855pt too wide) in paragraph at lines 147--148
+\OT1/cmr/m/n/10.95 ba-se. ADAM fue par-ti-cu-lar-men-te efec-ti-vo, lo-gran-do ma-yor ac-cu-racy en va-li-da-ci^^Son (0.6297)
  []
 
-[4] [5] [6] [7] [8] (./Ostrovsky_Eliana_Informe_TP3.pdf.aux
+<imagenes/ablation_comparison_time.png, id=106, 859.2903pt x 426.393pt>
+File: imagenes/ablation_comparison_time.png Graphic file (type png)
+<use imagenes/ablation_comparison_time.png>
+Package pdftex.def Info: imagenes/ablation_comparison_time.png  used on input line 157.
+(pdftex.def)             Requested size: 212.91577pt x 105.64807pt.
+<imagenes/ablation_comparison_metrics.png, id=107, 859.2903pt x 426.393pt>
+File: imagenes/ablation_comparison_metrics.png Graphic file (type png)
+<use imagenes/ablation_comparison_metrics.png>
+Package pdftex.def Info: imagenes/ablation_comparison_metrics.png  used on input line 163.
+(pdftex.def)             Requested size: 212.91577pt x 105.64807pt.
+[5]
+<imagenes/M3_learning_curves.png, id=117, 858.5676pt x 354.123pt>
+File: imagenes/M3_learning_curves.png Graphic file (type png)
+<use imagenes/M3_learning_curves.png>
+Package pdftex.def Info: imagenes/M3_learning_curves.png  used on input line 181.
+(pdftex.def)             Requested size: 399.21791pt x 164.66008pt.
+ [6 <./imagenes/ablation_comparison_time.png> <./imagenes/ablation_comparison_metrics.png>]
+<imagenes/M4_learning_curves.png, id=128, 859.2903pt x 354.123pt>
+File: imagenes/M4_learning_curves.png Graphic file (type png)
+<use imagenes/M4_learning_curves.png>
+Package pdftex.def Info: imagenes/M4_learning_curves.png  used on input line 188.
+(pdftex.def)             Requested size: 399.21791pt x 164.51959pt.
+ [7 <./imagenes/M3_learning_curves.png> <./imagenes/M4_learning_curves.png>]
+<imagenes/test_accuracy_comparison.png, id=138, 714.7503pt x 426.393pt>
+File: imagenes/test_accuracy_comparison.png Graphic file (type png)
+<use imagenes/test_accuracy_comparison.png>
+Package pdftex.def Info: imagenes/test_accuracy_comparison.png  used on input line 220.
+(pdftex.def)             Requested size: 310.50357pt x 185.23872pt.
+ [8 <./imagenes/test_accuracy_comparison.png>] [9] (./Ostrovsky_Eliana_Informe_TP3.aux
 LaTeX Info: Redefining \. on input line 25.
 LaTeX Info: Redefining \% on input line 25.
 )
-Package rerunfilecheck Info: File `Ostrovsky_Eliana_Informe_TP3.pdf.out' has not changed.
+Package rerunfilecheck Info: File `Ostrovsky_Eliana_Informe_TP3.out' has not changed.
 (rerunfilecheck)             Checksum: E6A10B6646591A99281C10B5CD5AFA00;2662.
  ) 
 Here is how much of TeX's memory you used:
- 12590 strings out of 478287
- 201106 string characters out of 5849290
- 510060 words of memory out of 5000000
- 30608 multiletter control sequences out of 15000+600000
+ 12702 strings out of 478287
+ 203794 string characters out of 5849290
+ 511740 words of memory out of 5000000
+ 30704 multiletter control sequences out of 15000+600000
  476507 words of font info for 55 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 60i,9n,63p,1181b,425s stack positions out of 5000i,500n,10000p,200000b,80000s
-</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Ostrovsky_Eliana_Informe_TP3.pdf.pdf (9 pages, 209982 bytes).
+ 60i,9n,63p,1263b,425s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on Ostrovsky_Eliana_Informe_TP3.pdf (10 pages, 438466 bytes).
 PDF statistics:
- 194 PDF objects out of 1000 (max. 8388607)
- 152 compressed objects within 2 object streams
- 33 named destinations out of 1000 (max. 500000)
- 118 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 223 PDF objects out of 1000 (max. 8388607)
+ 167 compressed objects within 2 object streams
+ 37 named destinations out of 1000 (max. 500000)
+ 148 words of extra memory for PDF output out of 10000 (max. 10000000)
 
