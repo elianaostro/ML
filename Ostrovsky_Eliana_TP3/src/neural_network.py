@@ -1,5 +1,7 @@
 import numpy as np
 from typing import List, Tuple, Dict, Any
+import time
+from src.utils import update_progress_bar
 
 class NeuralNetwork:
     """
@@ -157,9 +159,6 @@ class NeuralNetwork:
         Returns:
             Dictionary containing training history and metrics.
         """
-        import time
-        from src.utils import update_progress_bar
-        
         history = {
             'train_loss': [],
             'val_loss': [],

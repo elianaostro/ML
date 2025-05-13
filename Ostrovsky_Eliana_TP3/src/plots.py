@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 def plot_class_distribution(y):
     """
@@ -158,5 +158,93 @@ def plot_confusion_matrix(confusion_matrix: np.ndarray, figsize: Tuple[int, int]
     
     plt.xlabel('Predicted Label')
     plt.ylabel('True Label')
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_experiment_results(results: List[Dict[str, Any]], metric: str = 'val_accuracy', x_lim: Optional[Tuple[int, int]] = None) -> None:
+    """
+    Plot experiment results for comparison.
+    
+    Args:
+        results: List of experiment results.
+        metric: Metric to compare ('val_accuracy', 'val_loss', 'train_accuracy', 'train_loss', 'accuracy_val_vs_train').
+        x_lim: Tuple specifying the x-axis limits (start, end). If None, no limits are applied.
+    """
+    plt.figure(figsize=(12, 8))
+    
+    for res in results:
+        if metric in res['history']:
+            plt.plot(res['history'][metric], label=res['name'])
+        elif metric == 'accuracy_val_vs_train':
+            plt.plot(res['history']['val_accuracy'], label=f"{res['name']} - Val Accuracy")
+            plt.plot(res['history']['train_accuracy'], label=f"{res['name']} - Train Accuracy")
+    
+    if x_lim is not None:
+        plt.xlim(x_lim)
+    
+    plt.title(f"Comparison of {metric.replace('_', ' ').title()}")
+    plt.xlabel('Epoch')
+    plt.ylabel(metric.replace('_', ' ').title() if metric != 'accuracy_val_vs_train' else 'Accuracy')
+    plt.legend()
+    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout()
+    plt.show()
+
+def compare_training_times(results: List[Dict[str, Any]]) -> None:
+    """
+    Plot training times for different experiments.
+    
+    Args:
+        results: List of experiment results.
+    """
+    names = [res['name'] for res in results]
+    times = [res['training_time'] for res in results]
+    
+    plt.figure(figsize=(12, 6))
+    bars = plt.bar(names, times)
+    
+    for bar, time_val in zip(bars, times):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
+                f"{time_val:.2f}s", ha='center')
+    
+    plt.title('Training Time Comparison')
+    plt.xlabel('Experiment')
+    plt.ylabel('Time (seconds)')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
+
+def compare_final_metrics(results: List[Dict[str, Any]]) -> None:
+    """
+    Plot final metrics for different experiments.
+    
+    Args:
+        results: List of experiment results.
+    """
+    names = [res['name'] for res in results]
+    train_acc = [res['final_train_accuracy'] for res in results]
+    val_acc = [res['final_val_accuracy'] for res in results]
+    
+    x = np.arange(len(names))
+    width = 0.35
+    
+    plt.figure(figsize=(12, 6))
+    bars1 = plt.bar(x - width/2, train_acc, width, label='Train Accuracy')
+    bars2 = plt.bar(x + width/2, val_acc, width, label='Validation Accuracy')
+    
+    for bar, val in zip(bars1, train_acc):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                f"{val:.3f}", ha='center', fontsize=8)
+    
+    for bar, val in zip(bars2, val_acc):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01,
+                f"{val:.3f}", ha='center', fontsize=8)
+    
+    plt.title('Final Accuracy Comparison')
+    plt.xlabel('Experiment')
+    plt.ylabel('Accuracy')
+    plt.xticks(x, names, rotation=45, ha='right')
+    plt.legend()
     plt.tight_layout()
     plt.show()

@@ -1,6 +1,7 @@
 import numpy as np
 import time
-from typing import List, Tuple, Dict, Any, Optional
+from typing import List, Tuple, Dict, Any
+from src.utils import update_progress_bar
 
 class ImprovedNeuralNetwork:
     """
@@ -348,9 +349,6 @@ class ImprovedNeuralNetwork:
         Returns:
             Dictionary containing training history and metrics.
         """
-        import time
-        from src.utils import update_progress_bar
-        
         history = {
             'train_loss': [],
             'val_loss': [],
@@ -457,7 +455,7 @@ class ImprovedNeuralNetwork:
         
         if verbose >= 1:
             print()
-        
+
         history['training_time'] = time.time() - start_time
         
         if verbose >= 2:

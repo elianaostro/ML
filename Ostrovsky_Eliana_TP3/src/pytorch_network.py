@@ -60,7 +60,7 @@ class PyTorchNetwork(nn.Module):
         probabilities = nn.functional.softmax(output, dim=1)
         return probabilities.detach().numpy()
 
-    def train_model(self, X_train: np.ndarray, y_train: np.ndarray,
+    def train(self, X_train: np.ndarray, y_train: np.ndarray,
                     X_val: Optional[np.ndarray] = None, y_val: Optional[np.ndarray] = None,
                     epochs: int = 50, batch_size: int = 64,
                     early_stopping_patience: Optional[int] = None,
