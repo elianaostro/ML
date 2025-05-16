@@ -9,7 +9,9 @@
     "python.testing.pytestEnabled": false,
     "python.testing.unittestEnabled": true,
     "python.analysis.extraPaths": [
-        "./Ostrovsky_Eliana_TP2/src"
+        "./Ostrovsky_Eliana_TP2/src",
+        "./Ostrovsky_Eliana_TP4/src",
+        "./Ostrovsky_Eliana_TP4/src"
     ],
     "python.analysis.autoImportCompletions": true
 }
