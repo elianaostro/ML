@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 
 def inicializar_centroides(X: np.ndarray, k: int, seed: int = 0) -> np.ndarray:
     """Selecciona k puntos aleatorios como centroides iniciales."""
-    np.random.seed(seed)
+    if seed is not None:
+        np.random.seed(seed)
     indices = np.random.choice(len(X), k, replace=False)
     return X[indices]
 
@@ -21,9 +22,9 @@ def calcular_inercia(X: np.ndarray, centroides: np.ndarray, labels: np.ndarray) 
     """Calcula la suma de distancias cuadradas de cada punto a su centroide."""
     return sum(np.linalg.norm(X[i] - centroides[labels[i]]) ** 2 for i in range(len(X)))
 
-def kmeans(X: np.ndarray, k: int, max_iter: int = 100, tol: float = 1e-4) -> tuple:
+def kmeans(X: np.ndarray, k: int, max_iter: int = 100, tol: float = 1e-4, seed: int = 0) -> tuple:
     """Ejecuta el algoritmo de K-means."""
-    centroides = inicializar_centroides(X, k)
+    centroides = inicializar_centroides(X, k, seed=seed)
     for _ in range(max_iter):
         labels = asignar_clusters(X, centroides)
         nuevos_centroides = actualizar_centroides(X, labels, k)
@@ -39,6 +40,4 @@ def metodo_del_codo(X: np.ndarray,k_min = 2, k_max: int = 10):
     for k in range(k_min, k_max + 1):
         centroides, labels, inercia = kmeans(X, k)
         inercias.append({'k': k, 'centroide': centroides, 'labels':labels, 'inercia': inercia})
-
     return inercias
-
