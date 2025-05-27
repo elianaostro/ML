@@ -1,52 +1,54 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
-def cargar_datos(ruta_csv: str) -> np.ndarray:
-    """Carga los datos desde un archivo CSV."""
-    return pd.read_csv(ruta_csv).values
 
-def graficar_clusters(X: np.ndarray, labels: np.ndarray, centroides: np.ndarray):
-    """Grafica los puntos de datos coloreados por cluster y sus centroides."""
-    k = len(centroides)
-    plt.figure(figsize=(8, 6))
-    for i in range(k):
-        puntos_cluster = X[labels == i]
-        plt.scatter(puntos_cluster[:, 0], puntos_cluster[:, 1], label=f'Cluster {i}')
-    plt.scatter(centroides[:, 0], centroides[:, 1], color='black', marker='x', s=100, label='Centroides')
-    plt.xlabel('X1')
-    plt.ylabel('X2')
-    plt.title(f'Clusters encontrados por K-means (K={k})')
-    # plt.legend()
-    plt.grid(True)
-    plt.show()
+def cargar_datos(ruta):
+    """Carga datos desde un archivo CSV y los devuelve como un array NumPy."""
+    return pd.read_csv(ruta).values
 
-def graficar_dbscan(X, etiquetas):
-    """Grafica los clusters de DBSCAN, incluyendo ruido como puntos negros."""
-    unique_labels = np.unique(etiquetas)
-    colores = plt.cm.tab10(np.linspace(0, 1, len(unique_labels)))
 
-    plt.figure(figsize=(8, 6))
-    for i, label in enumerate(unique_labels):
-        puntos = X[etiquetas == label]
-        if label == -1:
-            plt.scatter(puntos[:, 0], puntos[:, 1], c='black', label='Ruido')
+def graficar_clusters(X, etiquetas, centroides=None, titulo="Clusters"):
+    """
+    Grafica los puntos del dataset coloreados según su etiqueta.
+    Si se especifican centroides, los marca como cruces negras.
+    Devuelve la figura para poder hacer un layout.
+    """
+    etiquetas_unicas = np.unique(etiquetas)
+    colores = plt.cm.tab10(np.linspace(0, 1, len(etiquetas_unicas)))
+
+    fig = plt.figure(figsize=(8, 6))
+
+    for i, etiqueta in enumerate(etiquetas_unicas):
+        puntos = X[etiquetas == etiqueta]
+        if etiqueta == -1:
+            plt.scatter(puntos[:, 0], puntos[:, 1], c='black', label="Ruido", s=30)
         else:
-            plt.scatter(puntos[:, 0], puntos[:, 1], color=colores[i], label=f'Cluster {label}')
-    plt.xlabel('X1')
-    plt.ylabel('X2')
-    plt.title('DBSCAN desde cero')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+            plt.scatter(puntos[:, 0], puntos[:, 1], color=colores[i], label=f"Cluster {etiqueta}", s=30)
 
-def graficar_metodo_del_codo(inercias: dict, k_max: int, k_min:int = 2):
-    """Grafica el método del codo."""
-    plt.figure(figsize=(8, 5))
-    inercia = [d['inercia'] for d in inercias]
-    plt.plot(range(k_min, k_max + 1), inercia , 'o-')
-    plt.xlabel('Número de clusters K')
-    plt.ylabel('Suma de distancias (L)')
-    plt.title('Método del codo')
+    if centroides is not None:
+        plt.scatter(centroides[:, 0], centroides[:, 1], color='black', marker='x', s=100, label='Centroides')
+
+    plt.title(titulo)
+    plt.xlabel("X1")
+    plt.ylabel("X2")
+    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0.)
     plt.grid(True)
-    plt.show()
+    
+    return fig
+
+def escalar_estandar(X):
+    """
+    Aplica normalización Z-score manual (media 0, varianza 1).
+    """
+    media = X.mean(axis=0)
+    std = X.std(axis=0)
+    return (X - media) / std
+
+def escalar_minmax(X):
+    """
+    Aplica normalización Min-Max (escala entre 0 y 1).
+    """
+    X_min = X.min(axis=0)
+    X_max = X.max(axis=0)
+    return (X - X_min) / (X_max - X_min)

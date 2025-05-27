@@ -1,92 +1,60 @@
 import numpy as np
+from src.clustering_common import inicializar_centroides, pdf_gaussiana
 from src.kmeans import kmeans
 
-def inicializar_gmm(X: np.ndarray, k: int):
-    """Inicializa medias, covarianzas y pesos con K-means."""
-    medias, labels, _ = kmeans(X, k)
-    n = X.shape[0]
-    d = X.shape[1]
-
-    # Inicialización de los pesos π_k
-    pesos = np.array([np.mean(labels == i) for i in range(k)])
-
-    # Inicialización de las matrices de covarianza
-    covarianzas = []
-    for i in range(k):
-        puntos = X[labels == i]
-        if len(puntos) > 1:
-            cov = np.cov(puntos.T) + 1e-6 * np.eye(d)  # Estabilización numérica
+def inicializar_gmm(X, k):
+    medias, labels, _ = kmeans(X, k, seed = None)
+    n, d = X.shape
+    pi = np.array([np.mean(labels == j) for j in range(k)])
+    covs = []
+    for j in range(k):
+        Xj = X[labels == j]
+        if len(Xj) > 1:
+            cov = np.cov(Xj.T) + 1e-6 * np.eye(d)
         else:
             cov = np.eye(d)
-        covarianzas.append(cov)
-    
-    return medias, covarianzas, pesos
+        covs.append(cov)
+    return medias, covs, pi
 
-def pdf_multivariada(x, media, cov):
-    """Calcula la probabilidad de una gaussiana multivariada."""
-    d = x.shape[0]
-    cov_det = np.linalg.det(cov)
-    cov_inv = np.linalg.inv(cov)
-    norm_const = 1.0 / np.sqrt((2 * np.pi) ** d * cov_det)
-    diff = x - media
-    exponent = -0.5 * diff.T @ cov_inv @ diff
-    return norm_const * np.exp(exponent)
-
-def expectation_step(X, medias, covarianzas, pesos):
-    """Calcula las responsabilidades (matriz gamma)."""
-    n = X.shape[0]
-    k = len(medias)
+def expectation(X, medias, covs, pi):
+    n, k = X.shape[0], len(medias)
     gamma = np.zeros((n, k))
-    
     for i in range(n):
         for j in range(k):
-            gamma[i, j] = pesos[j] * pdf_multivariada(X[i], medias[j], covarianzas[j])
-        gamma[i] /= np.sum(gamma[i])  # Normalizar
+            gamma[i, j] = pi[j] * pdf_gaussiana(X[i], medias[j], covs[j])
+        gamma[i] /= np.sum(gamma[i]) + 1e-10
     return gamma
 
-def maximization_step(X, gamma):
-    """Actualiza los parámetros del modelo usando gamma."""
+def maximization(X, gamma):
     n, d = X.shape
     k = gamma.shape[1]
-    
-    Nk = np.sum(gamma, axis=0)
-    medias = np.array([np.sum(gamma[:, j][:, np.newaxis] * X, axis=0) / Nk[j] for j in range(k)])
-    pesos = Nk / n
-    
-    covarianzas = []
+    Nk = gamma.sum(axis=0)
+    pi = Nk / n
+    medias = np.array([np.sum(gamma[:, j][:, None] * X, axis=0) / Nk[j] for j in range(k)])
+    covs = []
     for j in range(k):
         diff = X - medias[j]
-        cov_j = np.dot((gamma[:, j][:, np.newaxis] * diff).T, diff) / Nk[j]
-        cov_j += 1e-6 * np.eye(d)  # Estabilización
-        covarianzas.append(cov_j)
+        cov = (gamma[:, j][:, None] * diff).T @ diff / Nk[j]
+        cov += 1e-6 * np.eye(d)
+        covs.append(cov)
+    return medias, covs, pi
 
-    return medias, covarianzas, pesos
-
-def log_likelihood(X, medias, covarianzas, pesos):
-    """Calcula el log-likelihood total para evaluar convergencia."""
-    n = X.shape[0]
-    k = len(medias)
+def log_likelihood(X, medias, covs, pi):
     ll = 0
-    for i in range(n):
-        temp = 0
-        for j in range(k):
-            temp += pesos[j] * pdf_multivariada(X[i], medias[j], covarianzas[j])
-        ll += np.log(temp + 1e-10)
+    for i in range(X.shape[0]):
+        s = sum(pi[j] * pdf_gaussiana(X[i], medias[j], covs[j]) for j in range(len(medias)))
+        ll += np.log(s + 1e-10)
     return ll
 
 def gmm(X, k, max_iter=100, tol=1e-4):
-    """Algoritmo EM para GMM."""
-    medias, covarianzas, pesos = inicializar_gmm(X, k)
-    log_likelihood_old = -np.inf
-
+    medias, covs, pi = inicializar_gmm(X, k)
+    prev_ll = -np.inf
     for _ in range(max_iter):
-        gamma = expectation_step(X, medias, covarianzas, pesos)
-        medias, covarianzas, pesos = maximization_step(X, gamma)
-        ll_new = log_likelihood(X, medias, covarianzas, pesos)
-
-        if abs(ll_new - log_likelihood_old) < tol:
+        gamma = expectation(X, medias, covs, pi)
+        medias, covs, pi = maximization(X, gamma)
+        ll = log_likelihood(X, medias, covs, pi)
+        if abs(ll - prev_ll) < tol:
             break
-        log_likelihood_old = ll_new
-
+        prev_ll = ll
     labels = np.argmax(gamma, axis=1)
-    return medias, covarianzas, pesos, labels
+    return medias, covs, pi, labels
