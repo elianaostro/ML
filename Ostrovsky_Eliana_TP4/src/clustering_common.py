@@ -21,3 +21,16 @@ def pdf_gaussiana(x, mu, sigma):
     diff = x - mu
     exponent = -0.5 * diff.T @ inv @ diff
     return norm * np.exp(exponent)
+
+def iter_mejor_modelo(X, clustering_func, k, metric_index, max_iter=100, tol=1e-4, tries=100, **kwargs):
+    mejor_score = np.inf
+    mejor_resultado = None
+
+    for _ in range(tries):
+        resultado = clustering_func(X, k, max_iter=max_iter, tol=tol, **kwargs)
+        score = resultado[metric_index]
+        if score < mejor_score:
+            mejor_score = score
+            mejor_resultado = resultado
+
+    return mejor_resultado

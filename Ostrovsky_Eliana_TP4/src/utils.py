@@ -1,12 +1,11 @@
 import numpy as np
 import pandas as pd
+import sys
 import matplotlib.pyplot as plt
-
 
 def cargar_datos(ruta):
     """Carga datos desde un archivo CSV y los devuelve como un array NumPy."""
     return pd.read_csv(ruta).values
-
 
 def graficar_clusters(X, etiquetas, centroides=None, titulo="Clusters"):
     """
@@ -52,3 +51,27 @@ def escalar_minmax(X):
     X_min = X.min(axis=0)
     X_max = X.max(axis=0)
     return (X - X_min) / (X_max - X_min)
+
+def update_cluster_progress_bar(current_iter, total_iters, bar_length=50, metrics=None):
+    """
+    Muestra una barra de progreso para las iteraciones de clustering, con métricas opcionales.
+
+    Args:
+        current_iter: Iteración actual (comenzando en 1)
+        total_iters: Número total de iteraciones
+        bar_length: Largo de la barra de progreso
+        metrics: Diccionario de métricas a mostrar (opcional)
+    """
+    percent = float(current_iter) / total_iters
+    arrow_len = max(1, int(round(percent * bar_length)))
+    arrow = '=' * (arrow_len - 1) + '>' if arrow_len > 1 else '>'
+    spaces = ' ' * (bar_length - arrow_len)
+    
+    metrics_str = ""
+    if metrics:
+        metrics_str = " - " + " - ".join([f"{k}: {v:.4f}" for k, v in metrics.items()])
+    
+    sys.stdout.write(f"\rIteración: {current_iter}/{total_iters} [{arrow + spaces}] {int(percent * 100)}%{metrics_str}")
+    sys.stdout.flush()
+    if current_iter == total_iters:
+        print()
