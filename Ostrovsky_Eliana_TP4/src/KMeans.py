@@ -1,4 +1,4 @@
-from .Cluster import Cluster
+from src.Cluster import Cluster
 import numpy as np
 
 class KMeans(Cluster):
@@ -25,12 +25,12 @@ class KMeans(Cluster):
                 break
             centroids = new_centroids
 
-        self.centroids_ = centroids
+        self.means_ = centroids
         self.labels_ = labels
 
     def predict(self, X):
         return self._assign_labels(X)
 
     def _assign_labels(self, X):
-        distances = np.linalg.norm(X[:, np.newaxis] - self.centroids_, axis=2)
+        distances = np.linalg.norm(X[:, np.newaxis] - self.means_, axis=2)
         return np.argmin(distances, axis=1)

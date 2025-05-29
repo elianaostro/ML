@@ -1,6 +1,6 @@
 import numpy as np
-from Cluster import Cluster
-from KMeans import KMeans
+from src.Cluster import Cluster
+from src.KMeans import KMeans
 
 class GMM(Cluster):
     def __init__(self, n_clusters=1, max_iter=100, tol=1e-3, random_state=None):
@@ -13,16 +13,11 @@ class GMM(Cluster):
     def fit(self, X):
         n_samples, n_features = X.shape
         K = self.n_clusters
-
-        # indices = np.random.choice(n_samples, K, replace=False)
-        # self.means_ = X[indices]
-        # self.weights_ = np.ones(K) / K
-        # self.covariances_ = np.array([np.cov(X, rowvar=False) for _ in range(K)])
-
+        
         model_km = KMeans(n_clusters=K, random_state=self.random_state)
         model_km.fit(X)
         indices = model_km.labels_
-        self.means_ = model_km.centroids_
+        self.means_ = model_km.means_
         self.weights_ = np.bincount(indices, minlength=K) / n_samples
         self.covariances_ = np.array([
             np.cov(X[indices == k], rowvar=False) + 1e-6 * np.eye(n_features)

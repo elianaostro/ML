@@ -1,77 +1,219 @@
-import numpy as np
-import pandas as pd
-import sys
 import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from src.DBSCAN import DBSCAN
+import pandas as pd
+from tqdm import tqdm
+from itertools import product
 
-def cargar_datos(ruta):
-    """Carga datos desde un archivo CSV y los devuelve como un array NumPy."""
-    return pd.read_csv(ruta).values
 
-def graficar_clusters(X, etiquetas, centroides=None, titulo="Clusters"):
+def plot_clusters(X, labels, centroids=None, title="Clusters"):
     """
-    Grafica los puntos del dataset coloreados según su etiqueta.
-    Si se especifican centroides, los marca como cruces negras.
-    Devuelve la figura para poder hacer un layout.
+    Dibuja los puntos de datos coloreados por etiqueta, y los centroides si existen.
     """
-    etiquetas_unicas = np.unique(etiquetas)
-    colores = plt.cm.tab10(np.linspace(0, 1, len(etiquetas_unicas)))
+    unique_labels = np.unique(labels)
+    colors = plt.cm.get_cmap('tab10', len(unique_labels))
 
-    fig = plt.figure(figsize=(8, 6))
-
-    for i, etiqueta in enumerate(etiquetas_unicas):
-        puntos = X[etiquetas == etiqueta]
-        if etiqueta == -1:
-            plt.scatter(puntos[:, 0], puntos[:, 1], c='black', label="Ruido", s=30)
+    plt.figure(figsize=(8, 6))
+    for i, label in enumerate(unique_labels):
+        if label == -1:
+            color = 'k'
+            marker = 'x'
+            label_name = 'Ruido'
         else:
-            plt.scatter(puntos[:, 0], puntos[:, 1], color=colores[i], label=f"Cluster {etiqueta}", s=30)
+            color = colors(i)
+            marker = 'o'
+            label_name = f'Cluster {label}'
+        
+        mask = labels == label
+        plt.scatter(X[mask, 0], X[mask, 1], c=[color], label=label_name, marker=marker)
 
-    if centroides is not None:
-        plt.scatter(centroides[:, 0], centroides[:, 1], color='black', marker='x', s=100, label='Centroides')
+    if centroids is not None:
+        plt.scatter(centroids[:, 0], centroids[:, 1], c='black', s=200, marker='*', label='Centroides')
 
-    plt.title(titulo)
-    plt.xlabel("X1")
-    plt.ylabel("X2")
-    plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left', borderaxespad=0.)
+    plt.title(title)
+    plt.legend(bbox_to_anchor=(1.05, 0.5), loc='center left')
     plt.grid(True)
-    
+    plt.show()
+
+def elbow_method(X, k_range, model, random_state=None): 
+    """
+    Método del codo: para KMeans calcula la suma de distancias mínimas (L),
+    y para GMM usa la log-verosimilitud negativa (-log-likelihood).
+
+    Parameters:
+        - X: array de datos
+        - k_range: lista de valores de K a evaluar
+        - model: modelo a utilizar
+        - random_state: semilla opcional
+
+    Devuelve:
+        - lista de pérdidas (L o -loglikelihood)
+    """
+    losses = []
+
+    for k in k_range:
+        modelo = model(n_clusters=k, random_state=random_state)
+        modelo.fit(X)
+        centroids = modelo.means_
+        L = np.sum(np.min(np.linalg.norm(X[:, np.newaxis] - centroids, axis=2), axis=1))
+        losses.append(L)
+
+    return losses
+
+def plot_elbow(losses, k_range, title="Gráfico del Método del Codo"):
+    """
+    Dibuja el gráfico del método del codo.
+    Parameters:
+        - losses: lista de pérdidas (L o -log-likelihood)
+        - k_range: lista de valores de K
+    """
+    fig = plt.figure(figsize=(8, 4))
+    plt.plot(k_range, losses, marker='o')
+    plt.xlabel('Cantidad de clusters (K)')
+    plt.ylabel('inercia')
+    plt.title(title)
+    plt.grid(True)
     return fig
-
-def escalar_estandar(X):
-    """
-    Aplica normalización Z-score manual (media 0, varianza 1).
-    """
-    media = X.mean(axis=0)
-    std = X.std(axis=0)
-    return (X - media) / std
-
-def escalar_minmax(X):
-    """
-    Aplica normalización Min-Max (escala entre 0 y 1).
-    """
-    X_min = X.min(axis=0)
-    X_max = X.max(axis=0)
-    return (X - X_min) / (X_max - X_min)
-
-def update_cluster_progress_bar(current_iter, total_iters, bar_length=50, metrics=None):
-    """
-    Muestra una barra de progreso para las iteraciones de clustering, con métricas opcionales.
-
-    Args:
-        current_iter: Iteración actual (comenzando en 1)
-        total_iters: Número total de iteraciones
-        bar_length: Largo de la barra de progreso
-        metrics: Diccionario de métricas a mostrar (opcional)
-    """
-    percent = float(current_iter) / total_iters
-    arrow_len = max(1, int(round(percent * bar_length)))
-    arrow = '=' * (arrow_len - 1) + '>' if arrow_len > 1 else '>'
-    spaces = ' ' * (bar_length - arrow_len)
     
-    metrics_str = ""
-    if metrics:
-        metrics_str = " - " + " - ".join([f"{k}: {v:.4f}" for k, v in metrics.items()])
-    
-    sys.stdout.write(f"\rIteración: {current_iter}/{total_iters} [{arrow + spaces}] {int(percent * 100)}%{metrics_str}")
-    sys.stdout.flush()
-    if current_iter == total_iters:
-        print()
+def fit_random_seed(model, X, k, seed_range = range(100)):
+    """
+    Ajusta el modelo con diferentes semillas y devuelve el índice de la mejor semilla
+    según la suma de distancias mínimas (L) para KMeans o la log-verosimilitud negativa para GMM.
+    Parameters:
+        - model: modelo a utilizar (KMeans o GMM)
+        - X: datos de entrada
+        - k: número de clusters
+        - seed_range: rango de semillas a evaluar (default: range(100))
+    Returns:
+        - índice de la mejor semilla
+    """
+    losses = []
+    for i in seed_range:
+        np.random.seed(i)
+        modelo = model(n_clusters=k, random_state=i)
+        modelo.fit(X)
+        L = np.sum(np.min(np.linalg.norm(X[:, np.newaxis] - modelo.means_, axis=2), axis=1))
+        losses.append(L)
+
+    return np.argmin(losses)
+
+def silhouette_score(X, labels, dists=None):
+    """
+    Calcula el silhouette score promedio manualmente, optimizado con matriz de distancias.
+    """
+    n = len(X)
+    unique_labels = set(labels)
+    if len(unique_labels) <= 1 or (-1 in unique_labels and len(unique_labels) == 2):
+        return -1
+
+    if dists is None:
+        dists = np.linalg.norm(X[:, np.newaxis] - X[np.newaxis, :], axis=2)
+
+    silhouette_scores = []
+
+    for i in range(n):
+        label_i = labels[i]
+        if label_i == -1:
+            continue
+
+        same_cluster = np.where((labels == label_i) & (np.arange(n) != i))[0]
+        other_labels = [l for l in unique_labels if l != label_i and l != -1]
+
+        a = np.mean(dists[i][same_cluster]) if len(same_cluster) > 0 else 0
+
+        b_values = [
+            np.mean(dists[i][labels == other_label])
+            for other_label in other_labels
+            if np.any(labels == other_label)
+        ]
+
+        if not b_values:
+            continue
+
+        b = min(b_values)
+        s = (b - a) / max(a, b)
+        silhouette_scores.append(s)
+
+    return np.mean(silhouette_scores) if silhouette_scores else -1
+
+def penalized_silhouette_score(X, labels, dists=None):
+    """
+    Calcula un silhouette score penalizado por la cantidad de puntos de ruido (-1).
+    """
+    n = len(X)
+    n_noise = np.sum(labels == -1)
+    noise_ratio = n_noise / n
+
+    base_score = silhouette_score(X, labels, dists=dists)
+
+    if base_score == -1:
+        return -1
+
+    # Penaliza si hay ruido, con una caída suave
+    penalty = 1 - noise_ratio  # 1 (sin ruido), 0 (todo es ruido)
+    penalized_score = base_score * penalty
+
+    return penalized_score
+
+
+def explore_dbscan_params(X, eps_values, min_samples_values):
+    """
+    Evalúa combinaciones de parámetros para DBSCAN usando silhouette score optimizado.
+    """
+    best_score = -1
+    best_params = None
+    scores = []
+
+    # Precalcular matriz de distancias una sola vez
+    dists = np.linalg.norm(X[:, np.newaxis] - X[np.newaxis, :], axis=2)
+
+    param_combinations = list(product(eps_values, min_samples_values))
+    for eps, min_samples in tqdm(param_combinations, desc="Evaluando DBSCAN..."):
+        model = DBSCAN(eps=eps, min_samples=min_samples)
+        model.fit(X)
+        labels = model.labels_
+
+        score = penalized_silhouette_score(X, labels, dists=dists)
+
+        if score != -1:
+            scores.append((eps, min_samples, score))
+            if score > best_score:
+                best_score = score
+                best_params = (eps, min_samples)
+
+    if best_params:
+        print(f"Mejores parámetros: eps={best_params[0]}, min_samples={best_params[1]} con silhouette={best_score:.3f}")
+    else:
+        print("No se encontró una combinación válida con más de un cluster.")
+
+    return scores, best_params
+
+def plot_dbscan_scores(scores):
+    """
+    Dibuja gráficos comparativos a partir de los resultados de explore_dbscan_params.
+    """
+    # Convertir a DataFrame
+    df = pd.DataFrame(scores, columns=["eps", "min_samples", "silhouette"])
+
+    # HEATMAP
+    pivot_table = df.pivot(index="min_samples", columns="eps", values="silhouette")
+
+    plt.figure(figsize=(10, 6))
+    sns.heatmap(pivot_table, annot=True, fmt=".2f", cmap="viridis")
+    plt.title("Silhouette score para combinaciones de DBSCAN")
+    plt.xlabel("eps")
+    plt.ylabel("min_samples")
+    plt.tight_layout()
+    plt.show()
+
+    # 3D PLOT
+    fig = plt.figure(figsize=(10, 7))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot_trisurf(df["eps"], df["min_samples"], df["silhouette"], cmap="viridis", edgecolor="none")
+    ax.set_title("Superficie de silhouette scores")
+    ax.set_xlabel("eps")
+    ax.set_ylabel("min_samples")
+    ax.set_zlabel("Silhouette")
+    plt.tight_layout()
+    plt.show()

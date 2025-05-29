@@ -1,4 +1,4 @@
-from .Cluster import Cluster
+from src.Cluster import Cluster
 import numpy as np
 
 class DBSCAN(Cluster):
