@@ -1,40 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
-from src.DBSCAN import DBSCAN
-import pandas as pd
-from tqdm import tqdm
 from itertools import product
+from tqdm import tqdm
 
-
-def plot_clusters(X, labels, centroids=None, title="Clusters"):
-    """
-    Dibuja los puntos de datos coloreados por etiqueta, y los centroides si existen.
-    """
-    unique_labels = np.unique(labels)
-    colors = plt.cm.get_cmap('tab10', len(unique_labels))
-
-    plt.figure(figsize=(8, 6))
-    for i, label in enumerate(unique_labels):
-        if label == -1:
-            color = 'k'
-            marker = 'x'
-            label_name = 'Ruido'
-        else:
-            color = colors(i)
-            marker = 'o'
-            label_name = f'Cluster {label}'
-        
-        mask = labels == label
-        plt.scatter(X[mask, 0], X[mask, 1], c=[color], label=label_name, marker=marker)
-
-    if centroids is not None:
-        plt.scatter(centroids[:, 0], centroids[:, 1], c='black', s=200, marker='*', label='Centroides')
-
-    plt.title(title)
-    plt.legend(bbox_to_anchor=(1.05, 0.5), loc='center left')
-    plt.grid(True)
-    plt.show()
 
 def elbow_method(X, k_range, model, random_state=None): 
     """
@@ -61,22 +28,8 @@ def elbow_method(X, k_range, model, random_state=None):
 
     return losses
 
-def plot_elbow(losses, k_range, title="Gráfico del Método del Codo"):
-    """
-    Dibuja el gráfico del método del codo.
-    Parameters:
-        - losses: lista de pérdidas (L o -log-likelihood)
-        - k_range: lista de valores de K
-    """
-    fig = plt.figure(figsize=(8, 4))
-    plt.plot(k_range, losses, marker='o')
-    plt.xlabel('Cantidad de clusters (K)')
-    plt.ylabel('inercia')
-    plt.title(title)
-    plt.grid(True)
-    return fig
-    
-def fit_random_seed(model, X, k, seed_range = range(100)):
+
+def fit_random_seed(model, X, k, seed_range=range(100)):
     """
     Ajusta el modelo con diferentes semillas y devuelve el índice de la mejor semilla
     según la suma de distancias mínimas (L) para KMeans o la log-verosimilitud negativa para GMM.
@@ -97,6 +50,7 @@ def fit_random_seed(model, X, k, seed_range = range(100)):
         losses.append(L)
 
     return np.argmin(losses)
+
 
 def silhouette_score(X, labels, dists=None):
     """
@@ -137,6 +91,7 @@ def silhouette_score(X, labels, dists=None):
 
     return np.mean(silhouette_scores) if silhouette_scores else -1
 
+
 def penalized_silhouette_score(X, labels, dists=None):
     """
     Calcula un silhouette score penalizado por la cantidad de puntos de ruido (-1).
@@ -150,8 +105,7 @@ def penalized_silhouette_score(X, labels, dists=None):
     if base_score == -1:
         return -1
 
-    # Penaliza si hay ruido, con una caída suave
-    penalty = 1 - noise_ratio  # 1 (sin ruido), 0 (todo es ruido)
+    penalty = 1 - noise_ratio  
     penalized_score = base_score * penalty
 
     return penalized_score
@@ -161,11 +115,12 @@ def explore_dbscan_params(X, eps_values, min_samples_values):
     """
     Evalúa combinaciones de parámetros para DBSCAN usando silhouette score optimizado.
     """
+    from src.DBSCAN import DBSCAN
+    
     best_score = -1
     best_params = None
     scores = []
 
-    # Precalcular matriz de distancias una sola vez
     dists = np.linalg.norm(X[:, np.newaxis] - X[np.newaxis, :], axis=2)
 
     param_combinations = list(product(eps_values, min_samples_values))
@@ -188,32 +143,3 @@ def explore_dbscan_params(X, eps_values, min_samples_values):
         print("No se encontró una combinación válida con más de un cluster.")
 
     return scores, best_params
-
-def plot_dbscan_scores(scores):
-    """
-    Dibuja gráficos comparativos a partir de los resultados de explore_dbscan_params.
-    """
-    # Convertir a DataFrame
-    df = pd.DataFrame(scores, columns=["eps", "min_samples", "silhouette"])
-
-    # HEATMAP
-    pivot_table = df.pivot(index="min_samples", columns="eps", values="silhouette")
-
-    plt.figure(figsize=(10, 6))
-    sns.heatmap(pivot_table, annot=True, fmt=".2f", cmap="viridis")
-    plt.title("Silhouette score para combinaciones de DBSCAN")
-    plt.xlabel("eps")
-    plt.ylabel("min_samples")
-    plt.tight_layout()
-    plt.show()
-
-    # 3D PLOT
-    fig = plt.figure(figsize=(10, 7))
-    ax = fig.add_subplot(111, projection='3d')
-    ax.plot_trisurf(df["eps"], df["min_samples"], df["silhouette"], cmap="viridis", edgecolor="none")
-    ax.set_title("Superficie de silhouette scores")
-    ax.set_xlabel("eps")
-    ax.set_ylabel("min_samples")
-    ax.set_zlabel("Silhouette")
-    plt.tight_layout()
-    plt.show()
