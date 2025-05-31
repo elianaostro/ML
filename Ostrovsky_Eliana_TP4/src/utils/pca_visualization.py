@@ -86,8 +86,6 @@ def plot_pca_2d_per_class(X_centered, eigenvectors, y, title="PCA 2D por clase",
         mask = y == label
         axs[i].scatter(X_2d[mask, 0], X_2d[mask, 1], s=10, alpha=0.7, color="tab:blue")
         axs[i].set_title(f"Clase {label}")
-        axs[i].set_xlabel("PC1")
-        axs[i].set_ylabel("PC2")
         axs[i].set_xlim(-2500, 2000)
         axs[i].set_ylim(-1500, 1500)
         axs[i].grid(True)
